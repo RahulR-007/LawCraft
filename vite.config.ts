@@ -6,7 +6,7 @@ import path from 'path'
 // https://vitejs.dev/config/
 export default defineConfig({
   base: process.env.GITHUB_PAGES === 'true' ? '/LawCraft/' : '/',
-  envPrefix: ['VITE_', 'NEXT_PUBLIC_', 'SUPABASE_'],
+  envPrefix: ['VITE_', 'NEXT_PUBLIC_'],
   plugins: [react()],
   resolve: {
     alias: {
