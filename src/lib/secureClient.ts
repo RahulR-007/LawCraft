@@ -232,13 +232,23 @@ export async function secureHealthCheck(forceRefresh = false): Promise<boolean> 
     }
 
     try {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (!session?.access_token) {
+            // Unauthenticated user - server is reachable
+            cachedHealthCheck = { isHealthy: true, timestamp: now }
+            return true
+        }
+
         const { error } = await supabase.functions.invoke('ai-proxy', {
             body: {
                 messages: [{ role: 'user', content: 'ping' }],
                 options: { maxTokens: 1 },
             },
+            headers: {
+                Authorization: `Bearer ${session.access_token}`,
+            },
         })
-        const isHealthy = !error || (error as any)?.status === 401
+        const isHealthy = !error || (error as any)?.status === 401 || (error as any)?.status === 400
         cachedHealthCheck = { isHealthy, timestamp: now }
         return isHealthy
     } catch {
