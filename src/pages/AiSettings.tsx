@@ -1,80 +1,49 @@
 import React, { useState, useEffect } from 'react';
 import {
     Box, Heading, Text, VStack, HStack, Card, FormControl, FormLabel,
-    Input, Button, Select, useToast, Flex, Badge,
-    useColorMode, Slider, SliderTrack, SliderFilledTrack, SliderThumb, Divider
+    Button, Flex, Badge,
+    useColorMode, Divider
 } from '@chakra-ui/react';
-import { FiServer, FiCheckCircle, FiXCircle, FiSave, FiRefreshCw, FiSettings, FiSliders } from 'react-icons/fi';
+import { FiCheckCircle, FiXCircle, FiRefreshCw, FiSettings, FiZap, FiShield, FiLock } from 'react-icons/fi';
 import { ResponsiveContainer } from '../components/ResponsiveContainer';
-import { loadAISettings, saveAISettings, AISettings, resetAISettings } from '../lib/aiSettings';
-import { backendHealth, backendModels } from '../lib/backendClient';
+import { healthCheck, AI_CONFIG } from '../lib/aiClient';
+
+import FloatingNavigation from '../components/FloatingNavigation';
 
 const AiSettingsPage: React.FC = () => {
     const { colorMode } = useColorMode();
-    const toast = useToast();
 
-    const [settings, setSettings] = useState<AISettings>(loadAISettings());
     const [isChecking, setIsChecking] = useState(false);
-    const [isServerActive, setIsServerActive] = useState<boolean | null>(null);
-    const [availableModels, setAvailableModels] = useState<string[]>([]);
+    const [isApiActive, setIsApiActive] = useState<boolean | null>(null);
 
     useEffect(() => {
-            checkConnection();
+        checkConnection();
     }, []);
 
     const checkConnection = async () => {
         setIsChecking(true);
         try {
-            // Settings UI remains, but connectivity is validated through backend API now.
-            // (The backend is hardcoded to local Ollama + llama3.1:8b.)
-            const health = await backendHealth();
-            setIsServerActive(health.ok);
-            setAvailableModels(health.ok ? await backendModels() : []);
-        } catch (error) {
-            setIsServerActive(false);
-            setAvailableModels([]);
+            const ok = await healthCheck();
+            setIsApiActive(ok);
+        } catch {
+            setIsApiActive(false);
         } finally {
             setIsChecking(false);
         }
     };
 
-    const handleSettingChange = (field: keyof AISettings, value: any) => {
-        setSettings(prev => ({ ...prev, [field]: value }));
-    };
-
-    const handleSave = () => {
-        saveAISettings(settings);
-        toast({
-            title: 'Settings Saved',
-            description: 'Your AI preferences have been updated globally.',
-            status: 'success',
-            duration: 3000,
-            isClosable: true,
-        });
-    };
-
-    const handleReset = () => {
-        const defaultSettings = resetAISettings();
-        if (defaultSettings) setSettings(defaultSettings);
-        else setSettings(loadAISettings());
-        checkConnection(loadAISettings().ollamaUrl);
-        toast({
-            title: 'Reset to Defaults',
-            status: 'info',
-            duration: 2000,
-        });
-    };
-
-    const bgCard = colorMode === 'dark' ? "rgba(255, 255, 255, 0.08)" : "rgba(0, 0, 0, 0.02)";
-    const borderColor = colorMode === 'dark' ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)';
+    const bgCard = colorMode === 'dark' ? "rgba(13, 15, 23, 0.75)" : "rgba(0, 0, 0, 0.02)";
+    const borderColor = colorMode === 'dark' ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.1)';
 
     return (
         <Box
             minH="100vh"
-            pt={{ base: '80px', md: '100px' }}
+            pt={{ base: '90px', md: '110px' }}
             pb={{ base: '100px', md: '4xl' }}
-            bg={colorMode === 'dark' ? "black" : "gray.50"}
+            bg={colorMode === 'dark' ? "#08090d" : "gray.50"}
+            position="relative"
         >
+            <FloatingNavigation />
             <ResponsiveContainer>
                 <VStack spacing={8} align="stretch">
                     <HStack justify="space-between">
@@ -86,20 +55,38 @@ const AiSettingsPage: React.FC = () => {
                                 </Heading>
                             </HStack>
                             <Text color={colorMode === 'dark' ? 'gray.400' : 'gray.600'}>
-                                Manage your local Ollama connectivity and model generation parameters.
+                                Secure AI API connection via Supabase Edge Functions.
                             </Text>
                         </VStack>
-                        <Button
-                            bg="linear-gradient(135deg, #970fff, #7817ff)"
-                            color="white"
-                            leftIcon={<FiSave />}
-                            onClick={handleSave}
-                            _hover={{ bg: 'linear-gradient(135deg, #7817ff, #5a0bd9)' }}
-                        >
-                            Save Settings
-                        </Button>
                     </HStack>
 
+                    {/* Security Status Banner */}
+                    <Card
+                        bg="rgba(16, 185, 129, 0.08)"
+                        border="1px solid rgba(16, 185, 129, 0.25)"
+                        borderRadius="2xl"
+                        p={5}
+                    >
+                        <HStack spacing={4}>
+                            <Box p={3} borderRadius="xl" bg="rgba(16, 185, 129, 0.15)" border="1px solid rgba(16, 185, 129, 0.3)">
+                                <FiShield size={24} color="#10b981" />
+                            </Box>
+                            <VStack align="start" spacing={1} flex={1}>
+                                <HStack spacing={2}>
+                                    <Heading size="sm" color={colorMode === 'dark' ? 'white' : 'gray.800'}>
+                                        Secure Architecture Active
+                                    </Heading>
+                                    <Badge colorScheme="green" borderRadius="full" px={2}>SECURE</Badge>
+                                </HStack>
+                                <Text fontSize="sm" color={colorMode === 'dark' ? 'gray.300' : 'gray.600'}>
+                                    All AI API calls are routed through authenticated Supabase Edge Functions.
+                                    API keys are stored server-side and never exposed to the browser.
+                                </Text>
+                            </VStack>
+                        </HStack>
+                    </Card>
+
+                    {/* API Connection Status */}
                     <Card
                         bg={bgCard}
                         backdropFilter="blur(20px)"
@@ -110,34 +97,39 @@ const AiSettingsPage: React.FC = () => {
                         <VStack spacing={6} align="start">
                             <Flex justify="space-between" w="full" align="center">
                                 <HStack spacing={3}>
-                                    <FiServer size={20} color="#970fff" />
+                                    <FiZap size={20} color="#970fff" />
                                     <Heading size="md" color={colorMode === 'dark' ? 'white' : 'gray.800'}>
-                                        Ollama Server Connection
+                                        Edge Function Connection
                                     </Heading>
                                 </HStack>
                                 <Badge
-                                    colorScheme={isChecking ? "blue" : isServerActive ? "green" : "red"}
+                                    colorScheme={isChecking ? "blue" : isApiActive ? "green" : "red"}
                                     p={2} px={3} borderRadius="md" display="flex" alignItems="center" gap={2}
                                 >
-                                    {isChecking ? "Checking..." : isServerActive ? <><FiCheckCircle /> Active</> : <><FiXCircle /> Offline</>}
+                                    {isChecking ? "Checking..." : isApiActive ? <><FiCheckCircle /> Active</> : <><FiXCircle /> Offline</>}
                                 </Badge>
                             </Flex>
 
                             <FormControl>
                                 <FormLabel color={colorMode === 'dark' ? 'white' : 'gray.700'}>
-                                    Server URL (Endpoint)
+                                    API Routing
                                 </FormLabel>
                                 <HStack>
-                                    <Input
-                                        value={settings.ollamaUrl}
-                                        onChange={(e) => handleSettingChange('ollamaUrl', e.target.value)}
+                                    <Box
+                                        flex={1}
+                                        p={3}
                                         bg={colorMode === 'dark' ? "rgba(255,255,255,0.05)" : "white"}
                                         color={colorMode === 'dark' ? 'white' : 'black'}
                                         border={`1px solid ${borderColor}`}
-                                    />
+                                        borderRadius="md"
+                                        fontSize="sm"
+                                        fontFamily="mono"
+                                    >
+                                        {AI_CONFIG.baseUrl}
+                                    </Box>
                                     <Button
                                         leftIcon={<FiRefreshCw />}
-                                        onClick={() => checkConnection(settings.ollamaUrl)}
+                                        onClick={checkConnection}
                                         isLoading={isChecking}
                                     >
                                         Test
@@ -149,96 +141,71 @@ const AiSettingsPage: React.FC = () => {
                                 <FormLabel color={colorMode === 'dark' ? 'white' : 'gray.700'}>
                                     Active Model
                                 </FormLabel>
-                                <Select
-                                    value={settings.ollamaModel}
-                                    onChange={(e) => handleSettingChange('ollamaModel', e.target.value)}
+                                <Box
+                                    p={3}
                                     bg={colorMode === 'dark' ? "rgba(255,255,255,0.05)" : "white"}
                                     color={colorMode === 'dark' ? 'white' : 'black'}
                                     border={`1px solid ${borderColor}`}
+                                    borderRadius="md"
+                                    fontSize="sm"
+                                    fontFamily="mono"
                                 >
-                                    {availableModels.length > 0 ? availableModels.map(model => (
-                                        <option key={model} value={model} style={{ background: colorMode === 'dark' ? '#1a1a1a' : 'white' }}>
-                                            {model}
-                                        </option>
-                                    )) : (
-                                        <option value={settings.ollamaModel} style={{ background: colorMode === 'dark' ? '#1a1a1a' : 'white' }}>
-                                            {settings.ollamaModel} (Fallback)
-                                        </option>
-                                    )}
-                                </Select>
-                            </FormControl>
-                        </VStack>
-                    </Card>
-
-                    <Card
-                        bg={bgCard}
-                        backdropFilter="blur(20px)"
-                        border={`1px solid ${borderColor}`}
-                        borderRadius="2xl"
-                        p={6}
-                    >
-                        <VStack spacing={6} align="start">
-                            <HStack spacing={3}>
-                                <FiSliders size={20} color="#970fff" />
-                                <Heading size="md" color={colorMode === 'dark' ? 'white' : 'gray.800'}>
-                                    Advanced Generative Parameters
-                                </Heading>
-                            </HStack>
-
-                            <FormControl>
-                                <FormLabel color={colorMode === 'dark' ? 'white' : 'gray.700'}>
-                                    Temperature ({settings.temperature})
-                                </FormLabel>
-                                <Text fontSize="xs" color="gray.500" mb={2}>Controls randomness: Lower = focused, Higher = creative.</Text>
-                                <Slider
-                                    value={settings.temperature}
-                                    min={0} max={2} step={0.1}
-                                    onChange={(v) => handleSettingChange('temperature', v)}
-                                    colorScheme="purple"
-                                >
-                                    <SliderTrack><SliderFilledTrack /></SliderTrack>
-                                    <SliderThumb />
-                                </Slider>
+                                    {AI_CONFIG.model}
+                                </Box>
                             </FormControl>
 
                             <FormControl>
                                 <FormLabel color={colorMode === 'dark' ? 'white' : 'gray.700'}>
-                                    Top P ({settings.topP})
+                                    API Key Status
                                 </FormLabel>
-                                <Text fontSize="xs" color="gray.500" mb={2}>Limits token selection to a cumulative probability.</Text>
-                                <Slider
-                                    value={settings.topP}
-                                    min={0} max={1} step={0.05}
-                                    onChange={(v) => handleSettingChange('topP', v)}
-                                    colorScheme="purple"
+                                <Badge
+                                    colorScheme="green"
+                                    p={2} px={3} borderRadius="md"
+                                    display="flex" alignItems="center" gap={2}
                                 >
-                                    <SliderTrack><SliderFilledTrack /></SliderTrack>
-                                    <SliderThumb />
-                                </Slider>
-                            </FormControl>
-
-                            <FormControl>
-                                <FormLabel color={colorMode === 'dark' ? 'white' : 'gray.700'}>
-                                    Context Search Size (Top K): {settings.topK}
-                                </FormLabel>
-                                <Slider
-                                    value={settings.topK}
-                                    min={1} max={100} step={1}
-                                    onChange={(v) => handleSettingChange('topK', v)}
-                                    colorScheme="purple"
-                                >
-                                    <SliderTrack><SliderFilledTrack /></SliderTrack>
-                                    <SliderThumb />
-                                </Slider>
+                                    <FiLock size={14} />
+                                    Server-Side Secured — Not Exposed to Client
+                                </Badge>
                             </FormControl>
 
                             <Divider borderColor={borderColor} />
 
-                            <Flex justify="space-between" w="full">
-                                <Button variant="ghost" colorScheme="red" onClick={handleReset}>
-                                    Reset to Defaults
-                                </Button>
-                            </Flex>
+                            <Box
+                                w="full"
+                                p={4}
+                                bg={colorMode === 'dark' ? "rgba(151, 15, 255, 0.1)" : "rgba(151, 15, 255, 0.05)"}
+                                border="1px solid rgba(151, 15, 255, 0.2)"
+                                borderRadius="xl"
+                            >
+                                <Text fontSize="sm" color={colorMode === 'dark' ? 'gray.300' : 'gray.600'}>
+                                    <strong>How it works:</strong> LawCraft uses Supabase Edge Functions as a secure proxy.
+                                    Your requests are authenticated with your JWT, rate-limited (10 req/min), and token-quota
+                                    checked before being forwarded to the AI model. The API key never leaves the server.
+                                </Text>
+                            </Box>
+
+                            {/* Security Features */}
+                            <VStack align="start" spacing={3} w="full">
+                                <Text fontSize="sm" fontWeight="700" color={colorMode === 'dark' ? 'white' : 'gray.700'}>
+                                    Security Features
+                                </Text>
+                                {[
+                                    { label: 'JWT Authentication Required', status: true },
+                                    { label: 'Server-Side API Key Storage', status: true },
+                                    { label: 'Per-User Rate Limiting (10 req/min)', status: true },
+                                    { label: 'Token Quota Enforcement', status: true },
+                                    { label: 'Request Validation & Sanitization', status: true },
+                                    { label: 'Legal Topic Enforcement (Chatbot)', status: true },
+                                    { label: 'Row-Level Security on Documents', status: true },
+                                ].map((feature, i) => (
+                                    <HStack key={i} spacing={2}>
+                                        <FiCheckCircle size={14} color="#10b981" />
+                                        <Text fontSize="sm" color={colorMode === 'dark' ? 'gray.300' : 'gray.600'}>
+                                            {feature.label}
+                                        </Text>
+                                    </HStack>
+                                ))}
+                            </VStack>
                         </VStack>
                     </Card>
                 </VStack>

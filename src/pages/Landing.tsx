@@ -1,1206 +1,270 @@
-import React, { useState, useEffect } from 'react'
+import React from 'react'
 import {
   Box,
   Container,
   Heading,
   Text,
   Button,
-  Flex,
   VStack,
   HStack,
   Grid,
-  GridItem,
-  Icon,
-  useBreakpointValue
+  Badge,
+  SimpleGrid,
 } from '@chakra-ui/react'
 import { motion } from 'framer-motion'
 import {
   FiArrowRight,
-  FiMail,
   FiShield,
   FiFileText,
   FiUsers,
   FiZap,
-  FiStar,
-  FiGlobe,
-  FiAward
+  FiCheckCircle,
 } from 'react-icons/fi'
 import { useNavigate } from 'react-router-dom'
+import CyberMatrixHero from '../components/ui/cyber-matrix-hero'
+import HoverFooter from '../components/ui/hover-footer'
+import FloatingNavigation from '../components/FloatingNavigation'
 
 const MotionBox = motion(Box)
-const MotionText = motion(Text)
 
-// Floating law elements animation
-const FloatingElements: React.FC = () => {
-  return (
-    <Box position="absolute" top="0" left="0" w="full" h="full" pointerEvents="none" overflow="hidden">
-      {/* Justice Scale */}
-      <motion.div
-        style={{
-          position: 'absolute',
-          top: '20%',
-          right: '10%',
-          fontSize: '60px',
-          color: 'rgba(151, 15, 255, 0.1)',
-        }}
-        animate={{
-          y: [0, -20, 0],
-          rotate: [0, 5, 0, -5, 0],
-        }}
-        transition={{
-          duration: 6,
-          repeat: Infinity,
-          ease: "easeInOut"
-        }}
-      >
-        ⚖️
-      </motion.div>
-
-      {/* Gavel */}
-      <motion.div
-        style={{
-          position: 'absolute',
-          top: '60%',
-          left: '5%',
-          fontSize: '50px',
-          color: 'rgba(151, 15, 255, 0.15)',
-        }}
-        animate={{
-          y: [0, 15, 0],
-          rotate: [0, -10, 0, 10, 0],
-        }}
-        transition={{
-          duration: 4,
-          repeat: Infinity,
-          ease: "easeInOut",
-          delay: 1
-        }}
-      >
-        🔨
-      </motion.div>
-
-      {/* Law Book */}
-      <motion.div
-        style={{
-          position: 'absolute',
-          top: '30%',
-          left: '15%',
-          fontSize: '40px',
-          color: 'rgba(151, 15, 255, 0.1)',
-        }}
-        animate={{
-          y: [0, -10, 0],
-          x: [0, 5, 0],
-        }}
-        transition={{
-          duration: 5,
-          repeat: Infinity,
-          ease: "easeInOut",
-          delay: 2
-        }}
-      >
-        📚
-      </motion.div>
-
-      {/* Building/Court */}
-      <motion.div
-        style={{
-          position: 'absolute',
-          top: '70%',
-          right: '20%',
-          fontSize: '45px',
-          color: 'rgba(151, 15, 255, 0.12)',
-        }}
-        animate={{
-          y: [0, -8, 0],
-          scale: [1, 1.05, 1],
-        }}
-        transition={{
-          duration: 7,
-          repeat: Infinity,
-          ease: "easeInOut",
-          delay: 0.5
-        }}
-      >
-        🏛️
-      </motion.div>
-
-      {/* Contract/Document */}
-      <motion.div
-        style={{
-          position: 'absolute',
-          top: '15%',
-          left: '80%',
-          fontSize: '35px',
-          color: 'rgba(151, 15, 255, 0.08)',
-        }}
-        animate={{
-          y: [0, 12, 0],
-          rotate: [0, 3, 0],
-        }}
-        transition={{
-          duration: 4.5,
-          repeat: Infinity,
-          ease: "easeInOut",
-          delay: 1.5
-        }}
-      >
-        📄
-      </motion.div>
-
-      {/* Briefcase */}
-      <motion.div
-        style={{
-          position: 'absolute',
-          top: '80%',
-          left: '70%',
-          fontSize: '38px',
-          color: 'rgba(151, 15, 255, 0.1)',
-        }}
-        animate={{
-          y: [0, -12, 0],
-          x: [0, -3, 0],
-        }}
-        transition={{
-          duration: 5.5,
-          repeat: Infinity,
-          ease: "easeInOut",
-          delay: 3
-        }}
-      >
-        💼
-      </motion.div>
-    </Box>
-  )
-}
-
-interface SectionProps {
-  isActive: boolean
-  // eslint-disable-next-line no-unused-vars
-  onNavigate: (section: number) => void
-}
-
-// Intro Section Component
-const IntroSection: React.FC<SectionProps> = ({ isActive }) => {
+const Landing: React.FC = () => {
   const navigate = useNavigate()
-
-  return (
-    <MotionBox
-      position="absolute"
-      top="0"
-      left="0"
-      w="full"
-      h="100vh"
-      display="flex"
-      alignItems="center"
-      justifyContent="center"
-      opacity={isActive ? 1 : 0}
-      visibility={isActive ? 'visible' : 'hidden'}
-      transition="opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1)"
-      bg="linear-gradient(135deg, rgba(12, 12, 12, 0.95) 0%, rgba(26, 10, 46, 0.9) 50%, rgba(22, 33, 62, 0.85) 100%)"
-      backdropFilter="blur(20px)"
-      zIndex={isActive ? 2 : 1}
-      _before={{
-        content: '""',
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        background: 'radial-gradient(circle at 20% 50%, rgba(151, 15, 255, 0.08) 0%, transparent 60%)',
-        pointerEvents: 'none',
-        opacity: isActive ? 1 : 0,
-        transition: 'opacity 0.6s ease',
-      }}
-    >
-      <FloatingElements />
-
-      <Container maxW="1200px" textAlign="center">
-        <Grid templateColumns={{ base: '1fr', lg: '1fr 1fr' }} gap={12} alignItems="center">
-          {/* Left side - Text content */}
-          <GridItem>
-            <VStack spacing={8} align={{ base: 'center', lg: 'start' }} textAlign={{ base: 'center', lg: 'left' }}>
-              <MotionText
-                fontSize={{ base: '48px', md: '64px', lg: '72px' }}
-                fontWeight="900"
-                lineHeight="0.9"
-                color="white"
-                initial={{ opacity: 0, y: 50 }}
-                animate={isActive ? { opacity: 1, y: 0 } : { opacity: 0, y: 50 }}
-                transition={{ duration: 0.8, delay: 0.2 }}
-              >
-                Revolutionize
-                <br />
-                Legal
-                <br />
-                <Text as="span" color="#970fff" position="relative">
-                  Documentation
-                  <motion.div
-                    style={{
-                      position: 'absolute',
-                      bottom: '-10px',
-                      left: '0',
-                      right: '0',
-                      height: '4px',
-                      background: 'linear-gradient(90deg, #970fff, #7817ff)',
-                      borderRadius: '2px',
-                    }}
-                    initial={{ scaleX: 0 }}
-                    animate={isActive ? { scaleX: 1 } : { scaleX: 0 }}
-                    transition={{ duration: 0.6, delay: 1 }}
-                  />
-                </Text>
-              </MotionText>
-
-              <motion.div
-                initial={{ opacity: 0, y: 30 }}
-                animate={isActive ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
-                transition={{ duration: 0.8, delay: 0.4 }}
-              >
-                <Text fontSize="xl" color="gray.300" maxW="500px" mb={8}>
-                  Harness the power of AI to create professional legal documents in minutes.
-                  From contracts to NDAs, we make legal documentation accessible to everyone.
-                </Text>
-
-                <HStack spacing={4} justify={{ base: 'center', lg: 'start' }} flexWrap="wrap">
-                  <Button
-                    size="lg"
-                    bg="linear-gradient(135deg, #970fff, #7817ff)"
-                    color="white"
-                    boxShadow="0 8px 20px rgba(151, 15, 255, 0.3)"
-                    borderRadius="xl"
-                    onClick={() => navigate('/auth')}
-                    rightIcon={<FiArrowRight />}
-                    _hover={{
-                      transform: "translateY(-2px)",
-                      boxShadow: "0 12px 30px rgba(151, 15, 255, 0.4)",
-                    }}
-                    _active={{ transform: "translateY(0)" }}
-                    px={8}
-                    py={6}
-                  >
-                    Start Creating
-                  </Button>
-
-                  <Button
-                    size="lg"
-                    variant="outline"
-                    borderColor="rgba(151, 15, 255, 0.4)"
-                    color="white"
-                    borderRadius="xl"
-                    onClick={() => navigate('/dashboard')}
-                    _hover={{
-                      bg: 'rgba(151, 15, 255, 0.1)',
-                      borderColor: '#970fff',
-                      transform: "translateY(-2px)",
-                    }}
-                    px={8}
-                    py={6}
-                  >
-                    View Demo
-                  </Button>
-                </HStack>
-              </motion.div>
-            </VStack>
-          </GridItem>
-
-          {/* Right side - Visual elements */}
-          <GridItem display={{ base: 'none', lg: 'block' }}>
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={isActive ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.8 }}
-              transition={{ duration: 1, delay: 0.6 }}
-            >
-              <Box position="relative">
-                {/* Main visual element */}
-                <Box
-                  w="400px"
-                  h="400px"
-                  borderRadius="50%"
-                  bg="linear-gradient(135deg, rgba(151, 15, 255, 0.1), rgba(151, 15, 255, 0.05))"
-                  border="2px solid rgba(151, 15, 255, 0.3)"
-                  display="flex"
-                  alignItems="center"
-                  justifyContent="center"
-                  position="relative"
-                  mx="auto"
-                  backdropFilter="blur(20px)"
-                >
-                  {/* Rotating elements around the circle */}
-                  {[
-                    { icon: FiFileText, angle: 0, delay: 0 },
-                    { icon: FiShield, angle: 72, delay: 0.2 },
-                    { icon: FiUsers, angle: 144, delay: 0.4 },
-                    { icon: FiZap, angle: 216, delay: 0.6 },
-                    { icon: FiStar, angle: 288, delay: 0.8 }
-                  ].map((item, index) => (
-                    <motion.div
-                      key={index}
-                      style={{
-                        position: 'absolute',
-                        transform: `rotate(${item.angle}deg) translateY(-150px)`,
-                      }}
-                      animate={{
-                        rotate: [item.angle, item.angle + 360],
-                      }}
-                      transition={{
-                        duration: 20,
-                        repeat: Infinity,
-                        ease: "linear",
-                        delay: item.delay
-                      }}
-                    >
-                      <Box
-                        w="60px"
-                        h="60px"
-                        borderRadius="50%"
-                        bg="linear-gradient(135deg, #970fff, #7817ff)"
-                        display="flex"
-                        alignItems="center"
-                        justifyContent="center"
-                        boxShadow="0 8px 20px rgba(151, 15, 255, 0.4)"
-                      >
-                        <Icon as={item.icon} color="white" w={6} h={6} />
-                      </Box>
-                    </motion.div>
-                  ))}
-
-                  {/* Center icon */}
-                  <motion.div
-                    animate={{
-                      scale: [1, 1.1, 1],
-                    }}
-                    transition={{
-                      duration: 2,
-                      repeat: Infinity,
-                      ease: "easeInOut"
-                    }}
-                  >
-                    <Box
-                      fontSize="80px"
-                      color="#970fff"
-                      filter="drop-shadow(0 0 20px rgba(151, 15, 255, 0.5))"
-                    >
-                      ⚖️
-                    </Box>
-                  </motion.div>
-                </Box>
-              </Box>
-            </motion.div>
-          </GridItem>
-        </Grid>
-
-
-      </Container>
-    </MotionBox>
-  )
-}
-
-// Work Section Component
-const WorkSection: React.FC<SectionProps> = ({ isActive }) => {
-  const [activeSlide, setActiveSlide] = useState(1)
 
   const documents = [
     {
-      title: "Loan Agreement",
-      description: "Create comprehensive loan agreements with AI assistance",
-      image: "/assets/img/loan.svg",
-      icon: FiFileText
+      title: 'Non-Disclosure Agreement',
+      category: 'IP & Confidentiality',
+      description: 'Comprehensive NDA templates tailored to protect proprietary trade secrets and technical IP.',
+      icon: FiShield,
+      color: '#970fff',
     },
     {
-      title: "Contract Agreement",
-      description: "Generate professional contracts tailored to your needs",
-      image: "/assets/img/contract.svg",
-      icon: FiFileText
+      title: 'Master Services Agreement',
+      category: 'Commercial Contracts',
+      description: 'B2B service agreements with customizable scope, payment milestones, and SLA guarantees.',
+      icon: FiFileText,
+      color: '#00f2fe',
     },
     {
-      title: "Non-disclosure Agreement",
-      description: "Protect your confidential information with NDAs",
-      image: "/assets/img/nda.svg",
-      icon: FiShield
-    }
+      title: 'Employment Contract',
+      category: 'HR & Labor Compliance',
+      description: 'Fully compliant employment contracts covering CTC structures, leave policy, and non-compete clauses.',
+      icon: FiUsers,
+      color: '#2ed573',
+    },
+    {
+      title: 'Loan & Promissory Note',
+      category: 'Financial Agreements',
+      description: 'Enforceable loan instruments detailing interest rates, repayment tenure, and default remedies.',
+      icon: FiZap,
+      color: '#f59e0b',
+    },
   ]
 
-  const nextSlide = () => {
-    setActiveSlide(prev => prev < documents.length - 1 ? prev + 1 : 0)
-  }
-
-  const prevSlide = () => {
-    setActiveSlide(prev => prev > 0 ? prev - 1 : documents.length - 1)
-  }
-
   return (
-    <MotionBox
-      position="absolute"
-      top="0"
-      left="0"
-      w="full"
-      h="100vh"
-      display="flex"
-      alignItems="center"
-      justifyContent="center"
-      opacity={isActive ? 1 : 0}
-      visibility={isActive ? 'visible' : 'hidden'}
-      transition="opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1)"
-      bg="linear-gradient(135deg, rgba(12, 12, 12, 0.95) 0%, rgba(26, 10, 46, 0.9) 50%, rgba(22, 33, 62, 0.85) 100%)"
-      backdropFilter="blur(20px)"
-      zIndex={isActive ? 2 : 1}
-      _before={{
-        content: '""',
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        background: 'radial-gradient(circle at 70% 30%, rgba(151, 15, 255, 0.08) 0%, transparent 60%)',
-        pointerEvents: 'none',
-        opacity: isActive ? 1 : 0,
-        transition: 'opacity 0.6s ease',
-      }}
-    >
-      <Container maxW="960px">
-        <VStack spacing={12}>
-          <Heading
-            fontSize="30px"
-            textAlign="center"
-            color="white"
-            opacity={isActive ? 1 : 0}
-            transform={isActive ? 'translateY(0)' : 'translateY(30px)'}
-            transition="all 0.8s cubic-bezier(0.4, 0, 0.2, 1)"
-            transitionDelay={isActive ? '0.1s' : '0s'}
-          >
-            Our Work
-          </Heading>
+    <Box minH="100vh" bg="#050508" color="white" position="relative" overflowX="hidden">
+      <FloatingNavigation />
 
-          <Box position="relative" w="full" h="300px">
-            <Flex
-              justifyContent="center"
-              alignItems="center"
-              h="full"
-              position="relative"
-            >
-              {documents.map((doc, index) => (
-                <Box
-                  key={index}
-                  position="absolute"
-                  display={index === activeSlide ? "block" : "none"}
-                  textAlign="center"
-                  opacity={isActive && index === activeSlide ? 1 : 0}
-                  transform={isActive && index === activeSlide ? 'translateY(0)' : 'translateY(30px)'}
-                  transition="all 0.8s cubic-bezier(0.4, 0, 0.2, 1)"
-                  transitionDelay={isActive ? '0.3s' : '0s'}
-                >
-                  <VStack spacing={6}>
-                    <Box
-                      w="150px"
-                      h="150px"
-                      borderRadius="50%"
-                      overflow="hidden"
-                      border="2px solid rgba(151, 15, 255, 0.4)"
-                      display="flex"
-                      alignItems="center"
-                      justifyContent="center"
-                      bg="rgba(151, 15, 255, 0.15)"
-                      backdropFilter="blur(20px)"
-                      boxShadow="0 20px 40px rgba(151, 15, 255, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)"
-                      position="relative"
-                      _before={{
-                        content: '""',
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                        bg: 'linear-gradient(135deg, rgba(255, 255, 255, 0.1), transparent)',
-                        borderRadius: '50%',
-                        pointerEvents: 'none',
-                      }}
-                    >
-                      <Icon
-                        as={doc.icon}
-                        w="50px"
-                        h="50px"
-                        color="white"
-                      />
-                    </Box>
-                    <VStack spacing={2}>
-                      <Text
-                        fontSize="16px"
-                        fontWeight="700"
-                        textTransform="uppercase"
-                        color="white"
-                      >
-                        {doc.title}
-                      </Text>
-                      <Text
-                        fontSize="14px"
-                        color="#858585"
-                        maxW="300px"
-                        textAlign="center"
-                      >
-                        {doc.description}
-                      </Text>
-                    </VStack>
-                  </VStack>
-                </Box>
-              ))}
+      {/* Hero Section with Interactive Cyber Matrix */}
+      <Box position="relative" w="full">
+        <CyberMatrixHero
+          title="LawCraft Protocol"
+          badgeText="Autonomous Legal Intelligence Engine"
+          description="A new layer for modern legal architecture. Draft, analyze, and enforce legally sound contracts powered by real-time RAG intelligence and verified government statutes."
+          ctaText="Start Drafting Contracts"
+          onCtaClick={() => navigate('/auth')}
+        />
+      </Box>
 
-              {/* Navigation buttons */}
-              <Button
-                position="absolute"
-                left="20px"
-                top="50%"
-                transform="translateY(-50%)"
-                w="50px"
-                h="50px"
-                borderRadius="50%"
-                bg="rgba(85, 85, 85, 0.8)"
-                backdropFilter="blur(10px)"
-                border="1px solid rgba(255, 255, 255, 0.1)"
-                color="white"
-                onClick={prevSlide}
-                _hover={{
-                  bg: "rgba(102, 102, 102, 0.9)",
-                  transform: "translateY(-50%) scale(1.05)",
-                  borderColor: "rgba(151, 15, 255, 0.3)"
-                }}
-                _active={{
-                  transform: "translateY(-50%) scale(0.95)"
-                }}
-                fontSize="24px"
-                transition="all 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
-                boxShadow="0 4px 12px rgba(0, 0, 0, 0.3)"
+      {/* Feature / Work Section */}
+      <Box py={24} position="relative" zIndex={10} bg="linear-gradient(180deg, #050508 0%, #0d0f17 100%)">
+        <Container maxW="7xl" px={{ base: 4, md: 8 }}>
+          <VStack spacing={16} align="center" textAlign="center">
+            
+            <VStack spacing={4} maxW="3xl">
+              <Badge
+                bg="rgba(151, 15, 255, 0.2)"
+                color="#b84dff"
+                px={4}
+                py={1}
+                borderRadius="full"
+                border="1px solid rgba(151, 15, 255, 0.4)"
+                fontSize="xs"
+                fontWeight="700"
+                letterSpacing="0.05em"
               >
-                ‹
-              </Button>
+                AUTOMATED LEGAL ARCHITECTURE
+              </Badge>
+              <Heading fontSize={{ base: '3xl', md: '5xl' }} fontWeight="900" color="white">
+                Engineered for <Text as="span" color="#970fff">Precision</Text> & Compliance
+              </Heading>
+              <Text fontSize="lg" color="gray.400">
+                Ground every document in official statutory references with real-time compliance scoring and automated risk analysis.
+              </Text>
+            </VStack>
 
-              <Button
-                position="absolute"
-                right="20px"
-                top="50%"
-                transform="translateY(-50%)"
-                w="50px"
-                h="50px"
-                borderRadius="50%"
-                bg="rgba(85, 85, 85, 0.8)"
-                backdropFilter="blur(10px)"
-                border="1px solid rgba(255, 255, 255, 0.1)"
-                color="white"
-                onClick={nextSlide}
-                _hover={{
-                  bg: "rgba(102, 102, 102, 0.9)",
-                  transform: "translateY(-50%) scale(1.05)",
-                  borderColor: "rgba(151, 15, 255, 0.3)"
-                }}
-                _active={{
-                  transform: "translateY(-50%) scale(0.95)"
-                }}
-                fontSize="24px"
-                transition="all 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
-                boxShadow="0 4px 12px rgba(0, 0, 0, 0.3)"
-              >
-                ›
-              </Button>
-            </Flex>
-
-            {/* Slide indicators */}
-            <Flex justifyContent="center" mt={8} gap={2}>
-              {documents.map((_, index) => (
-                <Box
-                  key={index}
-                  w="10px"
-                  h="10px"
-                  borderRadius="50%"
-                  bg={index === activeSlide ? "#970fff" : "rgba(85, 85, 85, 0.6)"}
-                  cursor="pointer"
-                  onClick={() => setActiveSlide(index)}
-                  transition="all 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
+            {/* Document Cards Grid */}
+            <SimpleGrid columns={{ base: 1, md: 2, lg: 4 }} spacing={6} w="full">
+              {documents.map((doc, idx) => (
+                <MotionBox
+                  key={idx}
+                  p={8}
+                  borderRadius="3xl"
+                  bg="rgba(13, 15, 23, 0.85)"
+                  backdropFilter="blur(20px)"
                   border="1px solid rgba(255, 255, 255, 0.1)"
-                  _hover={{
-                    bg: index === activeSlide ? "#7817ff" : "rgba(151, 15, 255, 0.4)",
-                    transform: "scale(1.2)",
-                    boxShadow: "0 0 10px rgba(151, 15, 255, 0.4)"
-                  }}
-                  boxShadow={index === activeSlide ? "0 0 10px rgba(151, 15, 255, 0.6)" : "none"}
-                />
-              ))}
-            </Flex>
-          </Box>
-        </VStack>
-      </Container>
-    </MotionBox>
-  )
-}
-
-// About Section Component
-const AboutSection: React.FC<SectionProps> = ({ isActive }) => {
-  const navigate = useNavigate()
-
-  return (
-    <MotionBox
-      position="absolute"
-      top="0"
-      left="0"
-      w="full"
-      h="100vh"
-      display="flex"
-      alignItems="center"
-      justifyContent="center"
-      opacity={isActive ? 1 : 0}
-      visibility={isActive ? 'visible' : 'hidden'}
-      transition="opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1)"
-      bg="linear-gradient(135deg, rgba(12, 12, 12, 0.95) 0%, rgba(26, 10, 46, 0.9) 50%, rgba(22, 33, 62, 0.85) 100%)"
-      backdropFilter="blur(20px)"
-      zIndex={isActive ? 2 : 1}
-      _before={{
-        content: '""',
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        background: 'radial-gradient(circle at 40% 40%, rgba(151, 15, 255, 0.08) 0%, transparent 60%)',
-        pointerEvents: 'none',
-        opacity: isActive ? 1 : 0,
-        transition: 'opacity 0.6s ease',
-      }}
-    >
-      <Container maxW="1200px">
-        <Grid templateColumns={{ base: '1fr', lg: '1fr 1fr' }} gap={16} alignItems="center">
-          {/* Left side - Features */}
-          <GridItem>
-            <motion.div
-              initial={{ opacity: 0, x: -50 }}
-              animate={isActive ? { opacity: 1, x: 0 } : { opacity: 0, x: -50 }}
-              transition={{ duration: 0.8, delay: 0.2 }}
-            >
-              <VStack spacing={8} align="start">
-                <Heading
-                  fontSize={{ base: '36px', md: '48px' }}
-                  fontWeight="900"
-                  color="white"
+                  whileHover={{ y: -8, borderColor: doc.color, boxShadow: `0 20px 40px ${doc.color}20` }}
+                  transition={{ duration: 0.3 }}
+                  textAlign="left"
+                  display="flex"
+                  flexDirection="column"
+                  justifyContent="space-between"
                 >
-                  Why Choose <Text as="span" color="#970fff">LawCraft</Text>?
-                </Heading>
-
-                <VStack spacing={6} align="start">
-                  {[
-                    {
-                      icon: FiZap,
-                      title: 'Lightning Fast',
-                      description: 'Generate professional legal documents in minutes, not hours'
-                    },
-                    {
-                      icon: FiShield,
-                      title: 'Bank-Grade Security',
-                      description: 'Your sensitive legal data is protected with enterprise-level encryption'
-                    },
-                    {
-                      icon: FiAward,
-                      title: 'Expert Quality',
-                      description: 'AI trained on thousands of legal documents by expert lawyers'
-                    },
-                    {
-                      icon: FiGlobe,
-                      title: 'Multiple Jurisdictions',
-                      description: 'Support for various legal frameworks and international standards'
-                    }
-                  ].map((feature, index) => (
-                    <motion.div
-                      key={index}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={isActive ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-                      transition={{ duration: 0.6, delay: 0.4 + index * 0.1 }}
+                  <VStack align="start" spacing={4}>
+                    <Box
+                      p={3.5}
+                      borderRadius="2xl"
+                      bg={`${doc.color}20`}
+                      border={`1px solid ${doc.color}50`}
                     >
-                      <HStack spacing={4} align="start">
-                        <Box
-                          p={3}
-                          borderRadius="lg"
-                          bg="linear-gradient(135deg, rgba(151, 15, 255, 0.2), rgba(151, 15, 255, 0.1))"
-                          border="1px solid rgba(151, 15, 255, 0.3)"
-                        >
-                          <Icon as={feature.icon} color="#970fff" w={6} h={6} />
-                        </Box>
-                        <VStack align="start" spacing={1}>
-                          <Text fontSize="lg" fontWeight="bold" color="white">
-                            {feature.title}
-                          </Text>
-                          <Text color="gray.400" fontSize="sm" maxW="300px">
-                            {feature.description}
-                          </Text>
-                        </VStack>
-                      </HStack>
-                    </motion.div>
-                  ))}
-                </VStack>
-              </VStack>
-            </motion.div>
-          </GridItem>
+                      <doc.icon size={24} color={doc.color} />
+                    </Box>
+                    <Badge colorScheme="purple" borderRadius="full" px={2.5} fontSize="10px">
+                      {doc.category}
+                    </Badge>
+                    <Heading fontSize="xl" fontWeight="800" color="white">
+                      {doc.title}
+                    </Heading>
+                    <Text fontSize="sm" color="gray.400" lineHeight="relaxed">
+                      {doc.description}
+                    </Text>
+                  </VStack>
 
-          {/* Right side - Content */}
-          <GridItem>
-            <motion.div
-              initial={{ opacity: 0, x: 50 }}
-              animate={isActive ? { opacity: 1, x: 0 } : { opacity: 0, x: 50 }}
-              transition={{ duration: 0.8, delay: 0.4 }}
-            >
-              <VStack spacing={8} textAlign="center">
-                <HStack spacing={4}>
                   <Button
-                    size="lg"
-                    bg="linear-gradient(135deg, #970fff, #7817ff)"
-                    color="white"
-                    onClick={() => navigate('/pricing')}
+                    mt={6}
+                    size="sm"
+                    variant="ghost"
+                    color={doc.color}
                     rightIcon={<FiArrowRight />}
-                    _hover={{
-                      transform: "translateY(-2px)",
-                      boxShadow: "0 8px 20px rgba(151, 15, 255, 0.4)"
-                    }}
+                    onClick={() => navigate('/generate')}
+                    _hover={{ bg: `${doc.color}15` }}
+                    p={0}
+                    justifyContent="start"
                   >
-                    View Pricing
+                    Generate Document
                   </Button>
-
-                  <Button
-                    size="lg"
-                    variant="outline"
-                    borderColor="rgba(151, 15, 255, 0.4)"
-                    color="white"
-                    onClick={() => navigate('/help')}
-                    _hover={{
-                      bg: 'rgba(151, 15, 255, 0.1)',
-                      borderColor: '#970fff'
-                    }}
-                  >
-                    Learn More
-                  </Button>
-                </HStack>
-              </VStack>
-            </motion.div>
-          </GridItem>
-        </Grid>
-      </Container>
-    </MotionBox>
-  )
-}
-
-// Contact Section Component
-const ContactSection: React.FC<SectionProps> = ({ isActive }) => {
-  const navigate = useNavigate()
-
-  return (
-    <MotionBox
-      position="absolute"
-      top="0"
-      left="0"
-      w="full"
-      h="100vh"
-      display="flex"
-      alignItems="center"
-      justifyContent="center"
-      opacity={isActive ? 1 : 0}
-      visibility={isActive ? 'visible' : 'hidden'}
-      transition="opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1)"
-      bg="linear-gradient(135deg, rgba(12, 12, 12, 0.95) 0%, rgba(26, 10, 46, 0.9) 50%, rgba(22, 33, 62, 0.85) 100%)"
-      backdropFilter="blur(20px)"
-      zIndex={isActive ? 2 : 1}
-      _before={{
-        content: '""',
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        background: 'radial-gradient(circle at 60% 70%, rgba(151, 15, 255, 0.08) 0%, transparent 60%)',
-        pointerEvents: 'none',
-        opacity: isActive ? 1 : 0,
-        transition: 'opacity 0.6s ease',
-      }}
-    >
-      <Container maxW="800px">
-        <VStack spacing={12} textAlign="center">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={isActive ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
-            transition={{ duration: 0.8, delay: 0.1 }}
-          >
-            <Heading
-              fontSize={{ base: '36px', md: '48px', lg: '56px' }}
-              fontWeight="900"
-              color="white"
-              mb={4}
-            >
-              Ready to Transform Your
-              <br />
-              <Text as="span" color="#970fff">Legal Workflow</Text>?
-            </Heading>
-
-            <Text
-              fontSize="xl"
-              color="gray.300"
-              maxW="600px"
-              mx="auto"
-            >
-              Join thousands of legal professionals who trust LawCraft for their document creation needs.
-              Start your journey towards more efficient legal documentation today.
-            </Text>
-          </motion.div>
-
-          {/* Contact methods */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={isActive ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
-            transition={{ duration: 0.8, delay: 0.3 }}
-          >
-            <Grid templateColumns={{ base: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)' }} gap={8} mb={12}>
-              {[
-                {
-                  icon: FiMail,
-                  title: 'Email Support',
-                  description: 'Get expert help via email',
-                  action: () => window.open('mailto:support@lawcraft.com')
-                },
-                {
-                  icon: FiFileText,
-                  title: 'Documentation',
-                  description: 'Comprehensive guides',
-                  action: () => navigate('/help')
-                },
-                {
-                  icon: FiUsers,
-                  title: 'Community',
-                  description: 'Join our community',
-                  action: () => window.open('https://community.lawcraft.com', '_blank')
-                }
-              ].map((contact, index) => (
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={isActive ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-                  transition={{ duration: 0.6, delay: 0.5 + index * 0.1 }}
-                >
-                  <Box
-                    p={6}
-                    borderRadius="xl"
-                    bg="rgba(255, 255, 255, 0.05)"
-                    backdropFilter="blur(20px)"
-                    border="1px solid rgba(255, 255, 255, 0.1)"
-                    cursor="pointer"
-                    onClick={contact.action}
-                    transition="all 0.3s ease"
-                    _hover={{
-                      transform: 'translateY(-5px)',
-                      bg: 'rgba(151, 15, 255, 0.1)',
-                      borderColor: 'rgba(151, 15, 255, 0.3)',
-                      boxShadow: '0 8px 20px rgba(151, 15, 255, 0.2)'
-                    }}
-                  >
-                    <VStack spacing={4}>
-                      <Box
-                        p={3}
-                        borderRadius="lg"
-                        bg="linear-gradient(135deg, #970fff, #7817ff)"
-                      >
-                        <Icon as={contact.icon} color="white" w={6} h={6} />
-                      </Box>
-                      <VStack spacing={1}>
-                        <Text color="white" fontWeight="bold" fontSize="lg">
-                          {contact.title}
-                        </Text>
-                        <Text color="gray.400" fontSize="sm" textAlign="center">
-                          {contact.description}
-                        </Text>
-                      </VStack>
-                    </VStack>
-                  </Box>
-                </motion.div>
+                </MotionBox>
               ))}
-            </Grid>
-          </motion.div>
+            </SimpleGrid>
 
-          {/* Action buttons */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={isActive ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
-            transition={{ duration: 0.8, delay: 0.7 }}
-          >
-            <VStack spacing={4}>
-              <HStack spacing={6} flexWrap="wrap" justify="center">
+          </VStack>
+        </Container>
+      </Box>
+
+      {/* Platform Capabilities / About Section */}
+      <Box py={24} position="relative" zIndex={10} bg="#050508">
+        <Container maxW="7xl" px={{ base: 4, md: 8 }}>
+          <Grid templateColumns={{ base: '1fr', lg: '1fr 1fr' }} gap={12} alignItems="center">
+            
+            <VStack align="start" spacing={6}>
+              <Badge
+                bg="rgba(16, 185, 129, 0.15)"
+                color="#10b981"
+                px={3}
+                py={1}
+                borderRadius="full"
+                border="1px solid rgba(16, 185, 129, 0.3)"
+                fontSize="xs"
+                fontWeight="700"
+              >
+                RAG VECTOR KNOWLEDGE BASE
+              </Badge>
+              <Heading fontSize={{ base: '3xl', md: '4xl' }} fontWeight="800" color="white">
+                Beyond Standard Boilerplate — Legal Engineering Grounded in Law
+              </Heading>
+              <Text fontSize="md" color="gray.400" lineHeight="relaxed">
+                LawCraft references 25+ vetted legal clause definitions across Indian, US, UK, and EU jurisdictions. Every generated contract is validated server-side for mandatory elements.
+              </Text>
+
+              <VStack align="start" spacing={3} w="full" pt={2}>
+                {[
+                  'Server-Side API Key Isolation & JWT Auth',
+                  'Per-User Token Quotas & Rate-Limit Protections',
+                  'Automated Government Law Feed (DPDP, BNS, BSA, Labor Codes)',
+                  'Client-Side High Resolution DOCX Exporter',
+                ].map((item, i) => (
+                  <HStack key={i} spacing={3}>
+                    <FiCheckCircle color="#10b981" size={18} />
+                    <Text fontSize="sm" color="gray.200" fontWeight="600">
+                      {item}
+                    </Text>
+                  </HStack>
+                ))}
+              </VStack>
+
+              <HStack spacing={4} pt={4}>
                 <Button
                   size="lg"
                   bg="linear-gradient(135deg, #970fff, #7817ff)"
                   color="white"
-                  onClick={() => navigate('/auth')}
                   rightIcon={<FiArrowRight />}
-                  px={8}
-                  py={6}
-                  fontSize="lg"
-                  _hover={{
-                    transform: "translateY(-2px)",
-                    boxShadow: "0 12px 30px rgba(151, 15, 255, 0.4)"
-                  }}
-                  _active={{ transform: "translateY(0)" }}
+                  onClick={() => navigate('/auth')}
+                  boxShadow="0 8px 25px rgba(151, 15, 255, 0.4)"
+                  _hover={{ transform: 'translateY(-2px)' }}
                 >
-                  Get Started
+                  Get Started Free
                 </Button>
-
                 <Button
                   size="lg"
                   variant="outline"
-                  borderColor="rgba(151, 15, 255, 0.4)"
-                  color="white"
-                  onClick={() => navigate('/pricing')}
-                  px={8}
-                  py={6}
-                  fontSize="lg"
-                  _hover={{
-                    bg: 'rgba(151, 15, 255, 0.1)',
-                    borderColor: '#970fff',
-                    transform: "translateY(-2px)"
-                  }}
+                  borderColor="rgba(255,255,255,0.2)"
+                  color="gray.300"
+                  onClick={() => navigate('/law-updates')}
+                  _hover={{ bg: 'rgba(255,255,255,0.05)' }}
                 >
-                  View Pricing
+                  Explore Law Feed
                 </Button>
               </HStack>
-
-              <Text fontSize="sm" color="gray.500" textAlign="center">
-                Join thousands of professionals • Secure & reliable
-              </Text>
             </VStack>
-          </motion.div>
-        </VStack>
-      </Container>
-    </MotionBox>
-  )
-}
 
-// Side Navigation Component
-const SideNav: React.FC<{
-  activeSection: number
-  // eslint-disable-next-line no-unused-vars
-  onNavigate: (section: number) => void
-}> = ({ activeSection, onNavigate }) => {
-  const display = useBreakpointValue({ base: 'none', lg: 'block' })
-
-  return (
-    <Box
-      position="fixed"
-      left="40px"
-      top="50%"
-      transform="translateY(-50%)"
-      zIndex="10"
-      display={display}
-    >
-      <VStack spacing={8}>
-        {[
-          { id: 1, label: 'Intro' },
-          { id: 2, label: 'Work' },
-          { id: 3, label: 'About' },
-          { id: 4, label: 'Contact' }
-        ].map((item) => (
-          <Flex
-            key={item.id}
-            alignItems="center"
-            cursor="pointer"
-            onClick={() => onNavigate(item.id)}
-            transition="all 0.3s ease"
-            _hover={{ transform: 'translateX(10px)' }}
-          >
-            <Text
-              fontSize="14px"
-              fontWeight="300"
-              color={activeSection === item.id ? '#970fff' : '#555'}
-              mr={4}
-              fontFamily="monospace"
+            {/* Stat Showcase Box */}
+            <Box
+              p={8}
+              borderRadius="3xl"
+              bg="linear-gradient(135deg, rgba(13, 15, 23, 0.95), rgba(26, 10, 46, 0.8))"
+              border="1px solid rgba(151, 15, 255, 0.3)"
+              boxShadow="0 25px 60px rgba(0, 0, 0, 0.6)"
             >
-              {String(item.id).padStart(2, '0')}
-            </Text>
-            <Text
-              fontSize="14px"
-              fontWeight="300"
-              color={activeSection === item.id ? 'white' : 'transparent'}
-              opacity={activeSection === item.id ? 1 : 0}
-              transition="all 0.3s ease"
-            >
-              {item.label}
-            </Text>
-          </Flex>
-        ))}
-      </VStack>
-    </Box>
-  )
-}
+              <SimpleGrid columns={2} spacing={8}>
+                <VStack align="start" spacing={1}>
+                  <Text fontSize="4xl" fontWeight="900" color="#970fff">98.6%</Text>
+                  <Text fontSize="xs" color="gray.400" textTransform="uppercase" fontWeight="700">Compliance Rate</Text>
+                </VStack>
+                <VStack align="start" spacing={1}>
+                  <Text fontSize="4xl" fontWeight="900" color="#00f2fe">25+</Text>
+                  <Text fontSize="xs" color="gray.400" textTransform="uppercase" fontWeight="700">Vetted Statutory Clauses</Text>
+                </VStack>
+                <VStack align="start" spacing={1}>
+                  <Text fontSize="4xl" fontWeight="900" color="#10b981">100%</Text>
+                  <Text fontSize="xs" color="gray.400" textTransform="uppercase" fontWeight="700">Server Key Isolation</Text>
+                </VStack>
+                <VStack align="start" spacing={1}>
+                  <Text fontSize="4xl" fontWeight="900" color="#f59e0b">Daily</Text>
+                  <Text fontSize="xs" color="gray.400" textTransform="uppercase" fontWeight="700">Government Law Sync</Text>
+                </VStack>
+              </SimpleGrid>
+            </Box>
 
-// Header Component
-const Header: React.FC = () => {
-  const navigate = useNavigate()
-
-  return (
-    <Box
-      position="fixed"
-      top="0"
-      left="0"
-      w="full"
-      h="70px"
-      display="flex"
-      alignItems="center"
-      justifyContent="space-between"
-      px={8}
-      zIndex="10"
-      bg="rgba(0,0,0,0.8)"
-      backdropFilter="blur(10px)"
-      borderBottom="1px solid rgba(255, 255, 255, 0.1)"
-    >
-      <Text fontSize="25px" fontWeight="700" color="white" cursor="pointer" onClick={() => navigate('/')}>
-        <Text as="span" color="#970fff" fontSize="35px">L</Text>aw
-        <Text as="span" color="#970fff" fontSize="35px">C</Text>raft
-      </Text>
-
-      <HStack spacing={4}>
-        <Button
-          variant="ghost"
-          color="white"
-          size="sm"
-          onClick={() => navigate('/dashboard')}
-          _hover={{ bg: 'rgba(151, 15, 255, 0.1)' }}
-        >
-          Demo
-        </Button>
-        <Button
-          variant="ghost"
-          color="white"
-          size="sm"
-          onClick={() => navigate('/pricing')}
-          _hover={{ bg: 'rgba(151, 15, 255, 0.1)' }}
-        >
-          Pricing
-        </Button>
-        <Button
-          bg="linear-gradient(135deg, #970fff, #7817ff)"
-          color="white"
-          _hover={{
-            bg: "linear-gradient(135deg, #7817ff, #5a0bd9)",
-            transform: "translateY(-1px)"
-          }}
-          size="sm"
-          fontWeight="700"
-          onClick={() => navigate('/auth')}
-          px={6}
-        >
-          Sign In
-        </Button>
-      </HStack>
-    </Box>
-  )
-}
-
-// Main Landing Component
-const Landing: React.FC = () => {
-  const [activeSection, setActiveSection] = useState(1)
-
-  const handleNavigate = (section: number) => {
-    setActiveSection(section)
-  }
-
-  // Handle scroll events
-  useEffect(() => {
-    let canScroll = true
-    let scrollController: ReturnType<typeof setTimeout>
-
-    const handleWheel = (e: WheelEvent) => {
-      e.preventDefault()
-
-      const delta = e.deltaY
-
-      if (delta > 30 && canScroll) { // Reduced from 50 to 30
-        canScroll = false
-        clearTimeout(scrollController)
-        scrollController = setTimeout(() => {
-          canScroll = true
-        }, 1200) // Increased from 800 to 1200ms
-
-        if (activeSection < 4) {
-          setActiveSection(prev => prev + 1)
-        } else {
-          setActiveSection(1)
-        }
-      } else if (delta < -30 && canScroll) { // Reduced from -50 to -30
-        canScroll = false
-        clearTimeout(scrollController)
-        scrollController = setTimeout(() => {
-          canScroll = true
-        }, 1200) // Increased from 800 to 1200ms
-
-        if (activeSection > 1) {
-          setActiveSection(prev => prev - 1)
-        } else {
-          setActiveSection(4)
-        }
-      }
-    }    // Handle keyboard navigation
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowDown' && activeSection < 4) {
-        setActiveSection(prev => prev + 1)
-      } else if (e.key === 'ArrowUp' && activeSection > 1) {
-        setActiveSection(prev => prev - 1)
-      }
-    }
-
-    window.addEventListener('wheel', handleWheel, { passive: false })
-    window.addEventListener('keydown', handleKeyDown)
-
-    return () => {
-      window.removeEventListener('wheel', handleWheel)
-      window.removeEventListener('keydown', handleKeyDown)
-      clearTimeout(scrollController)
-    }
-  }, [activeSection])
-
-  return (
-    <Box
-      position="relative"
-      w="100%"
-      h="100vh"
-      overflow="hidden"
-      bg="black"
-      color="white"
-    >
-      <Header />
-      <SideNav activeSection={activeSection} onNavigate={handleNavigate} />
-
-      {/* Main Content Container */}
-      <Box position="relative" w="full" h="full">
-        <IntroSection isActive={activeSection === 1} onNavigate={handleNavigate} />
-        <WorkSection isActive={activeSection === 2} onNavigate={handleNavigate} />
-        <AboutSection isActive={activeSection === 3} onNavigate={handleNavigate} />
-        <ContactSection isActive={activeSection === 4} onNavigate={handleNavigate} />
+          </Grid>
+        </Container>
       </Box>
 
-      {/* Bottom Navigation for Mobile */}
-      <Flex
-        position="fixed"
-        bottom="20px"
-        left="50%"
-        transform="translateX(-50%)"
-        gap={2}
-        display={{ base: 'flex', lg: 'none' }}
-        bg="rgba(0,0,0,0.8)"
-        p={3}
-        borderRadius="lg"
-        backdropFilter="blur(10px)"
-      >
-        {[1, 2, 3, 4].map((section) => (
-          <Box
-            key={section}
-            w="10px"
-            h="10px"
-            borderRadius="50%"
-            bg={activeSection === section ? "#970fff" : "#555"}
-            cursor="pointer"
-            onClick={() => handleNavigate(section)}
-            transition="all 0.3s ease"
-          />
-        ))}
-      </Flex>
+      {/* Integrated Hover Footer */}
+      <Box px={{ base: 4, md: 8 }} pb={8} position="relative" zIndex={10}>
+        <Container maxW="7xl">
+          <HoverFooter />
+        </Container>
+      </Box>
     </Box>
   )
 }

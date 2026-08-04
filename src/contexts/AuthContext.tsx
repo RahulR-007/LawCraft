@@ -7,6 +7,11 @@ interface User {
   email: string
   user_metadata: {
     fullname?: string
+    full_name?: string
+    name?: string
+    avatar_url?: string
+    picture?: string
+    avatar?: string
     plan_name?: string
     tokens?: number
     phone?: string
@@ -22,6 +27,7 @@ interface AuthContextType {
   user: User | null
   signIn: (email: string, password: string) => Promise<{ error?: any }>
   signUp: (email: string, password: string, fullname: string) => Promise<{ error?: any }>
+  signInWithGoogle: () => Promise<{ error?: any }>
   signOut: () => Promise<{ error?: any }>
   updateUser: (userData: any) => Promise<void>
   loading: boolean
@@ -82,6 +88,21 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return { error }
   }
 
+  const signInWithGoogle = async () => {
+    const redirectTo = `${window.location.origin}/dashboard`
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo,
+        queryParams: {
+          access_type: 'offline',
+          prompt: 'select_account',
+        },
+      },
+    })
+    return { error }
+  }
+
   const signOut = async () => {
     const { error } = await supabase.auth.signOut()
     return { error }
@@ -104,6 +125,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     user,
     signIn,
     signUp,
+    signInWithGoogle,
     signOut,
     updateUser,
     loading

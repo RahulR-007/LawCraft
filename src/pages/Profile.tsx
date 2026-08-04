@@ -55,7 +55,7 @@ import {
     FiXCircle
 } from 'react-icons/fi'
 
-import { backendHealth } from '../lib/backendClient'
+import { healthCheck, AI_CONFIG } from '../lib/aiClient'
 
 const MotionBox = motion(Box)
 
@@ -74,7 +74,7 @@ const Profile: React.FC = () => {
     const gridColumns = useBreakpointValue({ base: '1fr', lg: '1fr 2fr' })
     const flexDirection = useBreakpointValue({ base: 'column', md: 'row' }) as 'column' | 'row'
 
-    // Initialize profile with Firebase user data
+    // Initialize profile with Supabase user data
     const [profile, setProfile] = useState({
         firstName: '',
         lastName: '',
@@ -107,7 +107,7 @@ const Profile: React.FC = () => {
         const checkServer = async () => {
             setIsCheckingServer(true)
             try {
-                const isHealthy = await backendHealth().then((r) => r.ok)
+                const isHealthy = await healthCheck()
                 setIsAiServerActive(isHealthy)
             } catch (error) {
                 setIsAiServerActive(false)
@@ -118,22 +118,27 @@ const Profile: React.FC = () => {
         checkServer()
     }, [])
 
-    // Load user data when component mounts or user changes
+    // Load user data when component mounts or user changes (supports Google OAuth & custom auth)
     useEffect(() => {
         if (user) {
-            const fullname = user.user_metadata?.fullname || ''
-            const [firstName = '', lastName = ''] = fullname.split(' ')
+            const rawFullname = user.user_metadata?.fullname || user.user_metadata?.full_name || user.user_metadata?.name || ''
+            const rawAvatar = user.user_metadata?.avatar || user.user_metadata?.avatar_url || user.user_metadata?.picture || ''
+
+            const nameParts = rawFullname.trim().split(/\s+/)
+            const firstName = nameParts[0] || ''
+            const lastName = nameParts.slice(1).join(' ') || ''
 
             setProfile(prev => ({
                 ...prev,
-                firstName,
-                lastName: lastName || '',
-                email: user.email || '',
-                phone: user.user_metadata?.phone || '',
-                company: user.user_metadata?.company || '',
-                position: user.user_metadata?.position || '',
-                location: user.user_metadata?.location || '',
-                bio: user.user_metadata?.bio || ''
+                firstName: prev.firstName || firstName,
+                lastName: prev.lastName || lastName,
+                email: user.email || prev.email || '',
+                avatar: prev.avatar || rawAvatar,
+                phone: user.user_metadata?.phone || prev.phone || '',
+                company: user.user_metadata?.company || prev.company || '',
+                position: user.user_metadata?.position || prev.position || '',
+                location: user.user_metadata?.location || prev.location || '',
+                bio: user.user_metadata?.bio || prev.bio || ''
             }))
 
             // Load user settings from metadata
@@ -165,7 +170,7 @@ const Profile: React.FC = () => {
 
     const handleSaveProfile = async () => {
         try {
-            // Update user metadata in Firebase with all profile fields
+            // Update user metadata in Supabase with all profile fields
             const fullname = `${profile.firstName} ${profile.lastName}`.trim()
             const updateData = {
                 // Keep existing metadata
@@ -202,7 +207,7 @@ const Profile: React.FC = () => {
 
     const handleSaveSettings = async () => {
         try {
-            // Save settings to Firebase user metadata
+            // Save settings to Supabase user metadata
             await updateUser({
                 settings: settings
             })
@@ -249,7 +254,7 @@ const Profile: React.FC = () => {
         },
         {
             label: 'Member Since',
-            value: user ? new Date(user.id).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : 'N/A',
+            value: user && (user as any).created_at ? new Date((user as any).created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : 'Recent',
             change: 'Join date',
             isIncrease: true,
             icon: FiActivity
@@ -398,6 +403,7 @@ const Profile: React.FC = () => {
                                                 <Avatar
                                                     size={avatarSize}
                                                     name={`${profile.firstName} ${profile.lastName}`}
+                                                    src={profile.avatar}
                                                     bg="linear-gradient(135deg, #970fff, #7817ff)"
                                                     color="white"
                                                 />
@@ -734,10 +740,10 @@ const Profile: React.FC = () => {
                                                             </Box>
                                                             <VStack align="start" spacing={0}>
                                                                 <Text fontWeight="bold" color={colorMode === 'dark' ? 'white' : 'gray.800'}>
-                                                                    Local Ollama Server
+                                                                    Cloud AI API
                                                                 </Text>
                                                                 <Text fontSize="sm" color={colorMode === 'dark' ? 'gray.400' : 'gray.500'}>
-                                                                    localhost:8787 (API) → localhost:11434 (Ollama)
+                                                                    {AI_CONFIG.baseUrl} ({AI_CONFIG.model})
                                                                 </Text>
                                                             </VStack>
                                                         </HStack>
@@ -750,7 +756,7 @@ const Profile: React.FC = () => {
                                                                 onClick={async () => {
                                                                     setIsCheckingServer(true)
                                                                     try {
-                                                                        const isHealthy = await backendHealth().then((r) => r.ok)
+                                                                    const isHealthy = await healthCheck()
                                                                         setIsAiServerActive(isHealthy)
                                                                     } catch (error) {
                                                                         setIsAiServerActive(false)
@@ -785,8 +791,8 @@ const Profile: React.FC = () => {
 
                                                     <Text fontSize="sm" color={colorMode === 'dark' ? 'gray.400' : 'gray.600'}>
                                                         {isAiServerActive
-                                                            ? "The LLaMA model server is active and ready to process legal documents."
-                                                            : "Make sure the Ollama server is running. Check your OLLAMA_HOST bindings if connecting from another device."}
+                                                            ? "The cloud AI API is active and ready to process legal documents."
+                                                            : "The AI API is not responding. Check your API key in Settings."}
                                                     </Text>
                                                 </VStack>
                                             </Card>

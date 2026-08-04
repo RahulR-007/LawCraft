@@ -56,6 +56,8 @@ const Pricing: React.FC = () => {
     const [loading, setLoading] = useState(true)
     const [processingPayment, setProcessingPayment] = useState<string | null>(null)
 
+    const [isAnnual, setIsAnnual] = useState(false)
+
     useEffect(() => {
         fetchPricingPlans()
     }, [])
@@ -263,7 +265,7 @@ const Pricing: React.FC = () => {
                                 <AlertIcon color="purple.400" />
                                 <VStack align="start" spacing={1}>
                                     <Text color="white" fontWeight="600">
-                                        Welcome back, {user?.user_metadata?.fullname || user?.email}!
+                                        Welcome back, {user?.user_metadata?.fullname || user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email}!
                                     </Text>
                                     <Text color="gray.300" fontSize="sm">
                                         Current Plan: {user?.user_metadata?.plan_name || 'Free'} • Tokens: {user?.user_metadata?.tokens || 2}
@@ -296,10 +298,39 @@ const Pricing: React.FC = () => {
                             <HStack spacing={2}>
                                 <FiStar color="#970fff" />
                                 <Text color="white" fontWeight="600">
-                                    🎉 Limited Time: 25% off Professional plan for the first 3 months!
+                                    Limited Time Offer: 25% off Professional plan for the first 3 months!
                                 </Text>
                             </HStack>
                         </Box>
+
+                        {/* Billing Toggle Switch */}
+                        <HStack spacing={4} bg="rgba(13, 15, 23, 0.8)" p={2} borderRadius="full" border="1px solid rgba(255, 255, 255, 0.12)">
+                            <Button
+                                size="sm"
+                                borderRadius="full"
+                                variant={!isAnnual ? 'solid' : 'ghost'}
+                                bg={!isAnnual ? 'linear-gradient(135deg, #970fff, #7817ff)' : 'transparent'}
+                                onClick={() => setIsAnnual(false)}
+                                color="white"
+                            >
+                                Monthly Billing
+                            </Button>
+                            <HStack spacing={2}>
+                                <Button
+                                    size="sm"
+                                    borderRadius="full"
+                                    variant={isAnnual ? 'solid' : 'ghost'}
+                                    bg={isAnnual ? 'linear-gradient(135deg, #970fff, #7817ff)' : 'transparent'}
+                                    onClick={() => setIsAnnual(true)}
+                                    color="white"
+                                >
+                                    Annual Billing
+                                </Button>
+                                <Badge colorScheme="green" borderRadius="full" px={2.5} py={0.5}>
+                                    SAVE 20%
+                                </Badge>
+                            </HStack>
+                        </HStack>
                     </VStack>
 
                     {/* Pricing Cards */}

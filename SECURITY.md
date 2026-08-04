@@ -1,27 +1,23 @@
-# Security Configuration
+# Security Policy & Configuration
 
-## Environment Variables Required
+## Environment Variables Configuration
 
-Before running this application, you must create a `.env` file in the root directory with the following variables:
+Before running this application, create a `.env.local` or configure your hosting platform (Vercel, Netlify, Cloudflare Pages) with the following production environment variables:
 
 ```bash
-VITE_Firebase_URL=your_Firebase_project_url
-VITE_Firebase_ANON_KEY=your_Firebase_anon_key
+VITE_SUPABASE_URL=your_supabase_project_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
 
-## Security Notes
+## Security Best Practices
 
-- Never commit your `.env` file to version control
-- The `.env.example` file shows the required structure
-- All sensitive credentials are now properly externalized
-- The application will not start without proper environment variables
+1. Secret Isolation:
+   - Client-side environment variables prefixed with VITE_ are exposed to browser bundles. Never put backend API keys (such as AI_API_KEY or SUPABASE_SERVICE_ROLE_KEY) in client .env files.
+   - All AI completion requests and LLM proxy calls are handled server-side via Supabase Edge Functions (ai-proxy, ai-chat, ai-generate-document).
 
-## Setup Instructions
+2. Content Security & Headers:
+   - Production Nginx server (nginx.conf) includes security headers: X-Frame-Options, X-Content-Type-Options, X-XSS-Protection, and Referrer-Policy.
+   - Sourcemaps are disabled (sourcemap: false in vite.config.ts) for production builds.
 
-1. Copy `.env.example` to `.env`
-2. Replace placeholder values with your actual Firebase credentials
-3. Restart your development server
-
-## Production Deployment
-
-Ensure all environment variables are properly configured in your deployment platform.
+3. Reporting Vulnerabilities:
+   - If you discover a security vulnerability within this repository, please disclose it responsibly via security advisory or maintainer contact.

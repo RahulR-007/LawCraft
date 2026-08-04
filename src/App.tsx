@@ -15,6 +15,7 @@ const Pricing = React.lazy(() => import('./pages/Pricing'))
 const Help = React.lazy(() => import('./pages/Help'))
 const Profile = React.lazy(() => import('./pages/Profile'))
 const AiSettingsPage = React.lazy(() => import('./pages/AiSettings'))
+const LawUpdates = React.lazy(() => import('./pages/LawUpdates'))
 
 // Loading component
 const LoadingSpinner = () => (
@@ -89,6 +90,14 @@ function App() {
                   element={
                     <ProtectedRoute>
                       <Profile />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/law-updates"
+                  element={
+                    <ProtectedRoute>
+                      <LawUpdates />
                     </ProtectedRoute>
                   }
                 />

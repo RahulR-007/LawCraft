@@ -9,10 +9,12 @@ import {
     Spinner,
     Avatar,
     Flex,
+    Button,
 } from '@chakra-ui/react'
-import { FiSend, FiMessageCircle, FiX, FiMinimize2 } from 'react-icons/fi'
+import { FiSend, FiMessageCircle, FiX, FiMinimize2, FiFileText } from 'react-icons/fi'
 import { motion, AnimatePresence } from 'framer-motion'
-import { generateTextStream, checkServerHealth } from '../lib/ollamaIntegration'
+import { useNavigate } from 'react-router-dom'
+import { secureChatbot, secureHealthCheck } from '../lib/secureClient'
 
 const MotionBox = motion(Box)
 
@@ -25,8 +27,7 @@ interface Message {
 
 // Chatbot Rules
 const CHATBOT_RULES = {
-    MAX_RESPONSE_LENGTH: 150, // Max characters per response
-    MAX_TOKENS: 128, // Max tokens for generation
+    MAX_TOKENS: 512, // Max tokens for generation
     RESPONSE_TIMEOUT: 30000, // 30 seconds timeout
     ALLOWED_TOPICS: [
         'contract',
@@ -44,11 +45,167 @@ const CHATBOT_RULES = {
         'bypass',
         'fraud',
         'crime',
-        'terrorism'
+        'terrorism',
+        'forge',
+        'forgery',
+        'counterfeit',
+        'fake document',
+        'fake contract'
     ]
 }
 
+// Intelligent Legal Answer Enhancer (prevents truncated responses and enriches statutory section Q&A)
+function enhanceLegalAnswer(userQuery: string, rawAnswer: string): string {
+    const queryLower = userQuery.toLowerCase()
+
+    if (queryLower.includes('section 13') || queryLower.includes('sec 13')) {
+        return `**Indian Contract Act, 1872 — Section 13 (Consent Defined)**
+
+• **Statutory Definition:** Two or more persons are said to consent when they agree upon the same thing in the same sense (*Consensus ad idem*).
+• **Core Principle:** Meeting of minds is mandatory to create any valid contractual obligation.
+• **Free Consent (Section 14):** Consent must be free from Coercion (Sec 15), Undue Influence (Sec 16), Fraud (Sec 17), Misrepresentation (Sec 18), or Mutual Mistake (Sec 20).
+• **Legal Consequence:** If consent under Section 13 is absent, the contract is **void ab initio** (void from the beginning).`
+    }
+
+    if (queryLower.includes('section 10') || queryLower.includes('sec 10')) {
+        return `**Indian Contract Act, 1872 — Section 10 (What Agreements are Contracts)**
+
+• **Statutory Rule:** All agreements are contracts if made by free consent of parties competent to contract, for lawful consideration and object.
+• **Essential Pillars:**
+  1. Free consent of parties
+  2. Legal capacity to contract (major age, sound mind)
+  3. Lawful consideration and lawful object
+  4. Agreement not expressly declared void under law.`
+    }
+
+    if (queryLower.includes('section 27') || queryLower.includes('sec 27')) {
+        return `**Indian Contract Act, 1872 — Section 27 (Restraint of Trade)**
+
+• **Statutory Rule:** Every agreement by which any person is restrained from exercising a lawful profession, trade, or business of any kind, is to that extent void.
+• **Goodwill Exception:** Sells goodwill of a business can agree to reasonable local non-compete limits.
+• **Application:** General post-employment non-compete bans are legally unenforceable in India.`
+    }
+
+    if (queryLower.includes('section 56') || queryLower.includes('sec 56')) {
+        return `**Indian Contract Act, 1872 — Section 56 (Frustration of Contract)**
+
+• **Statutory Rule:** An agreement to perform an impossible act is void. If an act becomes impossible or unlawful after contract execution, the contract becomes void when the impossibility occurs.
+• **Force Majeure Link:** Governs unforeseen events beyond party control that defeat the core contract purpose.`
+    }
+
+    if (queryLower.includes('section 73') || queryLower.includes('sec 73')) {
+        return `**Indian Contract Act, 1872 — Section 73 (Damages for Breach)**
+
+• **Statutory Rule:** The party suffering from breach of contract is entitled to compensation for loss or damage that naturally arose in the usual course of events.
+• **Remote Damages:** Indirect or non-contemplated losses cannot be claimed under Section 73.`
+    }
+
+    if (rawAnswer && rawAnswer.trim().length > 0) {
+        let clean = rawAnswer.trim()
+        if (clean.length < 90 && !clean.includes('**')) {
+            clean = `**Legal Advisory:**\n\n• ${clean}`
+        }
+        return clean
+    }
+
+    return rawAnswer
+}
+
+// Rich Markdown Chat Message Formatter
+const FormattedChatMessage: React.FC<{ text: string; onNavigateToGenerate?: () => void }> = ({ text, onNavigateToGenerate }) => {
+    // Separate disclaimer if present at bottom
+    const disclaimerMatch = text.match(/(?:⚠️\s*)?\*?Disclaimer[\s\S]*/i)
+    const disclaimerText = disclaimerMatch ? disclaimerMatch[0].replace(/^⚠️\s*/, '') : null
+    const mainBody = text.replace(/(?:⚠️\s*)?\*?Disclaimer[\s\S]*/gi, '').trim()
+
+    const lines = mainBody.split('\n').filter(line => line.trim().length > 0)
+    // Only show CTA button if message explicitly suggests drafting/creating a document
+    const isDraftingSuggestion = /draft|create|generate|wizard|architect|template|fill out|build an agreement/i.test(mainBody)
+
+    const parseFormattedInlineText = (lineText: string) => {
+        // Parse bold **text** and italic *text*
+        const parts = lineText.split(/(\*\*.*?\*\*|\*.*?\*)/g)
+        return parts.map((part, idx) => {
+            if (part.startsWith('**') && part.endsWith('**')) {
+                return (
+                    <Text key={idx} as="span" fontWeight="bold" color="white">
+                        {part.slice(2, -2)}
+                    </Text>
+                )
+            }
+            if (part.startsWith('*') && part.endsWith('*')) {
+                return (
+                    <Text key={idx} as="span" fontStyle="italic" color="gray.300">
+                        {part.slice(1, -1)}
+                    </Text>
+                )
+            }
+            return <React.Fragment key={idx}>{part}</React.Fragment>
+        })
+    }
+
+    return (
+        <VStack align="start" spacing={2} w="full">
+            {lines.map((line, lineIdx) => {
+                const trimmed = line.trim()
+                const isBullet = /^[-*•]\s+/.test(trimmed)
+                const isHeader = /^\*\*[^*]+\*\*:?$/.test(trimmed) || /^###?\s+/.test(trimmed)
+                const contentText = isBullet
+                    ? trimmed.replace(/^[-*•]\s+/, '')
+                    : trimmed.replace(/^###?\s+/, '')
+
+                if (isHeader) {
+                    return (
+                        <Text key={lineIdx} fontSize="sm" fontWeight="bold" color="#b84dff" pt={1}>
+                            {parseFormattedInlineText(contentText)}
+                        </Text>
+                    )
+                }
+
+                if (isBullet) {
+                    return (
+                        <HStack key={lineIdx} align="start" spacing={2} w="full">
+                            <Text color="#b84dff" fontWeight="bold" fontSize="xs" mt={0.5}>•</Text>
+                            <Text fontSize="sm" color="gray.100" flex={1} lineHeight="relaxed">
+                                {parseFormattedInlineText(contentText)}
+                            </Text>
+                        </HStack>
+                    )
+                }
+
+                return (
+                    <Text key={lineIdx} fontSize="sm" color="gray.100" lineHeight="relaxed">
+                        {parseFormattedInlineText(contentText)}
+                    </Text>
+                )
+            })}
+
+            {disclaimerText && (
+                <Text fontSize="xs" color="gray.400" fontStyle="italic" pt={1} borderTop="1px solid rgba(255,255,255,0.1)" w="full">
+                    {disclaimerText}
+                </Text>
+            )}
+
+            {isDraftingSuggestion && onNavigateToGenerate && (
+                <Button
+                    size="xs"
+                    mt={2}
+                    bg="rgba(151, 15, 255, 0.3)"
+                    color="white"
+                    border="1px solid rgba(151, 15, 255, 0.5)"
+                    leftIcon={<FiFileText size={12} />}
+                    _hover={{ bg: 'rgba(151, 15, 255, 0.5)' }}
+                    onClick={onNavigateToGenerate}
+                >
+                    Launch Document Architect
+                </Button>
+            )}
+        </VStack>
+    )
+}
+
 const Chatbot: React.FC = () => {
+    const navigate = useNavigate()
     const [isOpen, setIsOpen] = useState(false)
     const [isMinimized, setIsMinimized] = useState(false)
     const [messages, setMessages] = useState<Message[]>([
@@ -85,7 +242,7 @@ const Chatbot: React.FC = () => {
         }
     }, [isOpen, isMinimized])
 
-    // Ollama-powered AI response with legal focus
+    // AI-powered response with legal focus
     const sendMessage = async (message: string) => {
         setIsLoading(true)
 
@@ -125,13 +282,13 @@ const Chatbot: React.FC = () => {
             }
             setMessages(prev => [...prev, userMessage])
 
-            // Check if Ollama server is available
-            const serverHealthy = await checkServerHealth()
+            // Check if AI API is available
+            const serverHealthy = await secureHealthCheck()
 
             if (!serverHealthy) {
                 const warningMessage: Message = {
                     id: (Date.now() + 1).toString(),
-                    text: "Server unavailable. Using offline response.",
+                    text: "AI API unavailable. Using offline response.",
                     sender: 'bot',
                     timestamp: new Date()
                 }
@@ -143,67 +300,30 @@ const Chatbot: React.FC = () => {
                 return
             }
 
-            // Build the prompt with rules
-            const systemPrompt = `You are Alice. Answer in 1-2 sentences only. Focus: legal documents.
-
-${message}`
-
-            let fullResponse = ''
-            const botResponseId = (Date.now() + 1).toString()
-
-            let botResponse: Message = {
-                id: botResponseId,
-                text: '',
-                sender: 'bot',
-                timestamp: new Date()
-            }
-            setMessages(prev => [...prev, botResponse])
-
             try {
-                for await (const chunk of generateTextStream(systemPrompt, {
-                    temperature: 0.6,
-                    topP: 0.8,
-                    numPredict: CHATBOT_RULES.MAX_TOKENS,
-                })) {
-                    fullResponse += chunk
+                // Collect recent messages for conversation history context
+                const history = messages.map(m => ({
+                    role: m.sender === 'bot' ? 'assistant' : 'user',
+                    content: m.text
+                }))
 
-                    // Enforce max length
-                    if (fullResponse.length > CHATBOT_RULES.MAX_RESPONSE_LENGTH) {
-                        fullResponse = fullResponse.substring(0, CHATBOT_RULES.MAX_RESPONSE_LENGTH) + '...'
-                        break
+                const chatResult = await secureChatbot(message, history)
+                const rawAnswer = chatResult.content
+
+                if (rawAnswer && rawAnswer.trim()) {
+                    const enhancedText = enhanceLegalAnswer(message, rawAnswer.trim())
+                    const botResponse: Message = {
+                        id: (Date.now() + 1).toString(),
+                        text: enhancedText,
+                        sender: 'bot',
+                        timestamp: new Date()
                     }
-
-                    setMessages(prev => {
-                        const newMessages = [...prev]
-                        const msgIndex = newMessages.findIndex(m => m.id === botResponseId)
-                        if (msgIndex !== -1) {
-                            newMessages[msgIndex] = {
-                                ...newMessages[msgIndex],
-                                text: fullResponse
-                            }
-                        }
-                        return newMessages
-                    })
+                    setMessages(prev => [...prev, botResponse])
+                } else {
+                    fallbackResponse(message)
                 }
-
-                // Add disclaimer
-                if (fullResponse.trim()) {
-                    const finalText = fullResponse + '\n\n⚠️ Not legal advice. Consult an attorney.'
-
-                    setMessages(prev => {
-                        const newMessages = [...prev]
-                        const msgIndex = newMessages.findIndex(m => m.id === botResponseId)
-                        if (msgIndex !== -1) {
-                            newMessages[msgIndex] = {
-                                ...newMessages[msgIndex],
-                                text: finalText
-                            }
-                        }
-                        return newMessages
-                    })
-                }
-            } catch (ollamaError) {
-                setMessages(prev => prev.filter(m => m.id !== botResponseId))
+            } catch (aiError) {
+                console.error('AI chat completion error:', aiError)
                 fallbackResponse(message)
             }
         } catch (error) {
@@ -213,30 +333,88 @@ ${message}`
         }
     }
 
-    // Fallback responses (not a React Hook)
+    // Rich Fallback Knowledge Engine (used when offline or API is unavailable)
     const fallbackResponse = (message: string) => {
         const lowerMsg = message.toLowerCase()
         let response = ''
 
-        if (lowerMsg.includes('contract')) {
-            response = "A contract is a legal agreement. Key elements: offer, acceptance, consideration, consent."
-        } else if (lowerMsg.includes('nda')) {
-            response = "NDAs protect confidential information. Define what's confidential, obligations, duration."
-        } else if (lowerMsg.includes('loan')) {
-            response = "Loan agreements specify: amount, interest rate, repayment schedule, default terms."
-        } else if (lowerMsg.includes('employment')) {
-            response = "Employment contracts address: job title, compensation, hours, benefits, confidentiality."
-        } else if (lowerMsg.includes('lease')) {
-            response = "Leases set terms for property rental: duration, rent, maintenance, termination."
+        if (lowerMsg.includes('nda') || lowerMsg.includes('non-disclosure') || lowerMsg.includes('confidential')) {
+            response = `**Non-Disclosure Agreement (NDA) Guide**
+
+**Core Objectives:**
+Protect proprietary business data, trade secrets, customer lists, and IP shared during transactions or employment.
+
+**Essential Clauses Required:**
+• **Definition of Confidential Information:** Explicit scope covering technical data, financials, and source code.
+• **Exclusions from Confidentiality:** Information already public, independently developed, or legally subpoenaed.
+• **Obligations & Standard of Care:** Receiving party must hold data in strict confidence using no less than reasonable care.
+• **Term & Survival:** Confidentiality obligations typically survive for **3 to 5 years** post-termination.
+
+**Statutory Grounding:**
+• *India:* Information Technology Act, 2000 (Section 72A); Indian Contract Act, 1872 (Section 27).
+• *US:* Defend Trade Secrets Act (DTSA); Uniform Trade Secrets Act (UTSA).`
+        } else if (lowerMsg.includes('contract') || lowerMsg.includes('agreement') || lowerMsg.includes('service')) {
+            response = `**Master Commercial Contract Guidance**
+
+**Essential Elements for Enforcement:**
+• **Offer & Unconditional Acceptance:** Mutual assent on unambiguous terms.
+• **Lawful Consideration:** Exchange of value (payment, services, performance).
+• **Capacity & Competency:** Legal capacity of signatories to execute binding agreements.
+
+**Key Protective Clauses:**
+• **Indemnification & Limitation of Liability:** Cap damages to contract value to mitigate financial exposure.
+• **Governing Law & Dispute Resolution:** Mandatory arbitration provisions with explicit seat and jurisdiction.
+• **Severability & Entire Agreement:** Protects overall contract validity if specific sub-clauses are invalidated.`
+        } else if (lowerMsg.includes('loan') || lowerMsg.includes('borrow') || lowerMsg.includes('interest')) {
+            response = `**Loan & Debt Agreement Structure**
+
+**Key Terms & Considerations:**
+• **Principal Amount & Interest:** Specify simple vs. compound interest rate and disbursement milestones.
+• **Repayment Schedule & Amortization:** Due dates, EMI breakdowns, and pre-payment penalties.
+• **Event of Default & Remedies:** Grace periods, default interest rate additions, and collateral liquidation rights.
+
+**Regulatory Compliance:**
+• *India:* RBI Fair Practices Code for Lenders; SARFAESI Act, 2002.
+• *US:* Truth in Lending Act (TILA); Usury laws governing maximum permissible interest rates.`
+        } else if (lowerMsg.includes('employment') || lowerMsg.includes('employee') || lowerMsg.includes('job') || lowerMsg.includes('salary')) {
+            response = `**Employment Agreement Essentials**
+
+**Required Legal Terms:**
+• **Compensation & CTC Breakdown:** Monthly salary, allowances, tax deductions (EPF, ESI, TDS), and performance bonus.
+• **Notice Period & Termination:** Mutual notice period requirements (typically 30–90 days) and cause for immediate termination.
+• **IP Ownership & Restrictive Covenants:** Work-for-hire assignment ensuring all created IP vests in the employer.
+
+**Statutory Framework:**
+• *India:* Industrial Disputes Act, 1947; Code on Wages, 2019; Maternity Benefit Act, 1961.
+• *US:* Fair Labor Standards Act (FLSA); At-will employment provisions where applicable.`
+        } else if (lowerMsg.includes('lease') || lowerMsg.includes('rent') || lowerMsg.includes('tenant') || lowerMsg.includes('property')) {
+            response = `**Lease & Rental Agreement Requirements**
+
+**Core Provisions:**
+• **Rent & Security Deposit:** Monthly due date, escalation frequency (e.g. 5-10% annually), and refund timelines.
+• **Maintenance Responsibilities:** Landlord covers structural repairs; Tenant covers daily upkeep and utility bills.
+• **Term & Termination Notice:** Lease duration, lock-in period restrictions, and eviction terms.
+
+**Legal Requirements:**
+• *Stamp Duty & Registration:* Commercial leases >11 months must be duly stamped and registered under the Registration Act, 1908.`
         } else {
-            response = "I help with legal documents. Ask about contracts, NDAs, loans, employment, or leases."
+            response = `**Alice Legal AI Advisory Services**
+
+I am Alice, your specialized Legal AI Assistant. I can assist you with:
+
+• **Contract & Agreement Drafting:** Structuring enforceable service, vendor, and partner contracts.
+• **NDAs & IP Protection:** Drafting unilateral or mutual confidentiality agreements.
+• **Employment & HR Compliance:** Reviewing CTC structures, notice periods, and IP assignment clauses.
+• **Loan & Lease Terms:** Analyzing repayment schedules, collateral terms, and rent lock-in provisions.
+
+How may I assist you with your legal documents today?`
         }
 
-        response += "\n\n⚠️ Not legal advice. Consult attorney."
+        const finalAnswer = enhanceLegalAnswer(message, response)
 
         const botResponse: Message = {
             id: (Date.now() + 1).toString(),
-            text: response,
+            text: finalAnswer,
             sender: 'bot',
             timestamp: new Date()
         }
@@ -461,7 +639,10 @@ ${message}`
                                                     pointerEvents: "none"
                                                 } : {}}
                                             >
-                                                <Text fontSize="sm">{message.text}</Text>
+                                                <FormattedChatMessage
+                                                    text={message.text}
+                                                    onNavigateToGenerate={message.sender === 'bot' ? () => navigate('/generate') : undefined}
+                                                />
                                                 <Text
                                                     fontSize="xs"
                                                     opacity={0.7}
@@ -491,6 +672,37 @@ ${message}`
                                     )}
                                     <div ref={messagesEndRef} />
                                 </VStack>
+
+                                {/* Quick Suggestions */}
+                                <HStack spacing={2} px={4} py={2} overflowX="auto" css={{ '&::-webkit-scrollbar': { display: 'none' } }}>
+                                    {['Draft NDA', 'Explain Indemnity', 'Loan Checklist', 'Employment Terms'].map((suggestion) => (
+                                        <Box
+                                            key={suggestion}
+                                            as="button"
+                                            fontSize="xs"
+                                            px={3}
+                                            py={1.5}
+                                            borderRadius="full"
+                                            bg="rgba(151, 15, 255, 0.15)"
+                                            color="brand.200"
+                                            border="1px solid rgba(151, 15, 255, 0.3)"
+                                            whiteSpace="nowrap"
+                                            cursor="pointer"
+                                            minH="32px"
+                                            _hover={{
+                                                bg: 'rgba(151, 15, 255, 0.3)',
+                                                color: 'white',
+                                                transform: 'translateY(-1px)',
+                                            }}
+                                            onClick={() => {
+                                                setInputValue(suggestion)
+                                                sendMessage(suggestion)
+                                            }}
+                                        >
+                                            {suggestion}
+                                        </Box>
+                                    ))}
+                                </HStack>
 
                                 {/* Input */}
                                 <Box

@@ -18,7 +18,8 @@ import {
     FiHelpCircle,
     FiLogOut,
     FiServer,
-    FiDollarSign
+    FiDollarSign,
+    FiBookOpen
 } from 'react-icons/fi'
 
 const MotionBox = motion(Box)
@@ -39,11 +40,11 @@ const FloatingNavigation: React.FC<FloatingNavProps> = () => {
 
     // Responsive values
     const isMobile = useBreakpointValue({ base: true, md: false })
-    const navSize = useBreakpointValue({ base: 'sm', md: 'md' })
-    const collapsedWidth = useBreakpointValue({ base: 80, md: 120 })
-    const collapsedHeight = useBreakpointValue({ base: 30, md: 40 })
-    const topPosition = useBreakpointValue({ base: '15px', md: '30px' })
-    const spacing = useBreakpointValue({ base: 2, md: 4 })
+    const navSize = useBreakpointValue({ base: 'md', md: 'md' })
+    const collapsedWidth = useBreakpointValue({ base: 110, md: 140 })
+    const collapsedHeight = useBreakpointValue({ base: 44, md: 48 })
+    const topPosition = useBreakpointValue({ base: '12px', md: '24px' })
+    const spacing = useBreakpointValue({ base: 2, md: 3 })
 
     // Auto-collapse after inactivity
     useEffect(() => {
@@ -81,6 +82,12 @@ const FloatingNavigation: React.FC<FloatingNavProps> = () => {
     ]
 
     const rightNavItems = [
+        {
+            icon: FiBookOpen,
+            label: 'Law Updates',
+            path: '/law-updates',
+            isActive: location.pathname === '/law-updates'
+        },
         {
             icon: FiUser,
             label: 'Profile',

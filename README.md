@@ -1,259 +1,95 @@
 # LawCraft AI - Legal Document Generation Platform
 
-A modern React-based legal document generation platform with AI-powered document creation capabilities.
+LawCraft AI is an enterprise-grade legal document generation platform built with React 18, TypeScript, Chakra UI, and Supabase Edge Functions. It empowers legal professionals to architect jurisdiction-aware contracts, NDAs, employment agreements, loan documents, and lease agreements with real-time statutory risk scoring and AI assistance.
 
-## 🔒 LICENSE & COPYRIGHT
+---
 
-**⚠️ PROPRIETARY SOFTWARE - ALL RIGHTS RESERVED**
+## Features
 
-This software is proprietary and confidential to RahulR-007. Unauthorized copying, distribution, modification, or use is strictly prohibited and may result in severe civil and criminal penalties. See LICENSE file for complete terms.
+- Autonomous Legal Architect: Step-by-step document creation wizard with customizable clauses, jurisdiction selection, and party metadata.
+- Alice Legal AI Chatbot: Real-time legal advisory chatbot providing statutory definitions (Indian Contract Act, IT Act), clause analysis, and template suggestions.
+- DOCX Export Engine: Generates professional, publication-ready .docx contracts formatted with proper legal margins, headings, and signature blocks.
+- Google OAuth & Supabase Auth: Secure single sign-on via Google OAuth and email/password authentication with row-level security (RLS).
+- Glassmorphism UI System: Modern dark-mode interface built on Chakra UI and Framer Motion micro-animations.
 
-## 🚀 Features
+---
 
-### ✅ Completed
-- **Modern Landing Page** with smooth scrolling sections (Home, Info, Pricing, Contact)
-- **Authentication System** with Firebase integration (Sign up/Sign in)
-- **Responsive Design** with black and purple theme matching original
-- **Dashboard** with user profile management
-- **React Router** for navigation
-- **Chakra UI** for modern component library
-- **Framer Motion** for smooth animations
-- **TypeScript** for type safety
+## Technology Stack
 
-### 🔄 In Progress
-- **AI Chat Integration** (Alice chatbot replacement)
-- **Document Generation** interface
-- **Pricing Plans** with payment integration
-- **Help/Support** pages
+- Frontend: React 18, TypeScript, Vite 4
+- UI Framework: Chakra UI, Framer Motion, Lucide Icons, React Icons
+- Backend & Database: Supabase (PostgreSQL, Row-Level Security, Auth, Edge Functions)
+- Document Export: docx JavaScript engine
+- Testing: Vitest, React Testing Library
 
-### 📋 Todo
-- **Database Schema** setup in Firebase
-- **Payment Integration** (Stripe/Razorpay)
-- **Email Templates** for verification
-- **Admin Dashboard** for user management
-- **API Integration** for document generation
-- **File Upload/Download** functionality
+---
 
-## 🛠️ Technology Stack
-
-- **Frontend**: React 18, TypeScript
-- **UI Library**: Chakra UI
-- **Animation**: Framer Motion
-- **Routing**: React Router Dom
-- **Backend**: Firebase (Database, Authentication, Storage)
-- **Build Tool**: Vite
-- **Styling**: CSS Modules + Chakra UI theme
-
-## 🚀 Deployment
-
-### Quick Deploy Options
-
-#### Vercel (Recommended)
-1. Connect your GitHub repository to Vercel
-2. Configure environment variables in Vercel dashboard
-3. Deploy automatically on every push
-
-#### Netlify
-1. Connect your GitHub repository to Netlify  
-2. Configure environment variables in Netlify dashboard
-3. Deploy automatically on every push
-
-#### Docker
-```bash
-# Build and run with Docker
-docker build -t law-craft .
-docker run -p 80:80 law-craft
-```
-
-### Environment Variables Required
-```bash
-VITE_Firebase_URL=your_Firebase_project_url
-VITE_Firebase_ANON_KEY=your_Firebase_anon_key
-```
-
-### Build Optimization
-- ✅ Bundle size optimized with code splitting
-- ✅ Vendor chunks separated for better caching
-- ✅ Lazy loading implemented for routes
-- ✅ Assets optimized for production
-
-## 🎨 Design System
-
-### Colors
-- **Primary Black**: `#0c0c0c`
-- **Primary Purple**: `#970fff`
-- **Secondary Purple**: `#7817ff`
-- **White**: `#ffffff`
-- **Gray variants**: For text and borders
-
-### Typography
-- **Font Family**: Montserrat (300, 400, 700, 900)
-- **Responsive font sizes** for different screen sizes
-
-## 📁 Project Structure
-
-```
-Law-Craft/
-├── public/
-│   ├── assets/
-│   │   └── img/          # Images and assets
-│   └── index.html
-├── src/
-│   ├── components/       # Reusable components
-│   ├── contexts/         # React contexts (Auth, etc.)
-│   ├── pages/           # Page components
-│   │   ├── Landing.tsx   # Main landing page
-│   │   ├── Auth.tsx      # Authentication page
-│   │   └── Dashboard.tsx # User dashboard
-│   ├── theme.new.ts     # Chakra UI theme configuration
-│   ├── App.tsx          # Main app component
-│   └── main.tsx         # App entry point
-├── .env                 # Environment variables
-├── package.json         # Dependencies
-└── README.md           # This file
-```
-
-## 🚀 Getting Started
+## Quick Start
 
 ### Prerequisites
-- Node.js 18+ 
+- Node.js 18+
 - npm or yarn
-- Firebase account (for backend)
 
 ### Installation
 
-1. **Clone the repository**
+1. Clone the repository:
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/RahulR-007/Law-Craft.git
    cd Law-Craft
    ```
 
-2. **Install dependencies**
+2. Install dependencies:
    ```bash
    npm install
    ```
 
-3. **Setup environment variables**
-   ```bash
-   cp .env.example .env
-   # Edit .env with your Firebase credentials
+3. Configure Environment Variables:
+   Create a `.env.local` file in the root directory:
+   ```env
+   VITE_SUPABASE_URL=https://your-project.supabase.co
+   VITE_SUPABASE_ANON_KEY=your-supabase-anon-key
    ```
 
-4. **Start development server**
+4. Run Development Server:
    ```bash
    npm run dev
    ```
-
-5. **Open browser**
-   Navigate to `http://localhost:3000`
-
-## 🔧 Configuration
-
-### Firebase Setup
-
-1. Create a new Firebase project
-2. Copy your project URL and anon key to `.env`
-3. Set up authentication in Firebase dashboard
-4. Create user profile table:
-
-```sql
--- User profiles table
-create table profiles (
-  id uuid references auth.users on delete cascade,
-  full_name text,
-  plan_name text default 'Free',
-  tokens integer default 10,
-  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
-  updated_at timestamp with time zone default timezone('utc'::text, now()) not null,
-  primary key (id)
-);
-
--- Enable RLS
-alter table profiles enable row level security;
-
--- Policy for users to see own profile
-create policy "Users can view own profile" 
-  on profiles for select 
-  using (auth.uid() = id);
-
--- Policy for users to update own profile
-create policy "Users can update own profile" 
-  on profiles for update 
-  using (auth.uid() = id);
-```
-
-## 📱 Features Overview
-
-### Landing Page
-- **Smooth scrolling sections** with animation
-- **Interactive navigation** (side nav + mobile nav)
-- **Document type showcase** with slider
-- **Contact information** and social links
-
-### Authentication
-- **Sign up/Sign in** with email and password
-- **Email verification** (configured in Firebase)
-- **User profile** with plan and token information
-- **Secure logout** functionality
-
-### Dashboard
-- **AI Chat interface** placeholder (for future integration)
-- **User profile modal** with logout option
-- **Navigation to different sections**
-- **Responsive design** for all devices
-
-## 🎯 Original vs Modern Comparison
-
-| Feature | Original (PHP) | Modern (React) |
-|---------|----------------|----------------|
-| Frontend | HTML/CSS/JS | React + TypeScript |
-| Backend | PHP + MySQL | Firebase |
-| Styling | SASS/CSS | Chakra UI + CSS |
-| Animation | jQuery | Framer Motion |
-| Auth | Custom PHP | Firebase Auth |
-| Database | MySQL | PostgreSQL (Firebase) |
-| Deployment | Traditional hosting | Vercel/Netlify |
-
-## 🚀 Deployment
-
-### Development
-```bash
-npm run dev
-```
-
-### Production Build
-```bash
-npm run build
-npm run preview
-```
-
-### Deploy to Vercel
-1. Connect your GitHub repository to Vercel
-2. Add environment variables in Vercel dashboard
-3. Deploy automatically on push to main branch
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test thoroughly
-5. Submit a pull request
-
-## 📄 License
-
-This project is licensed under the MIT License.
-
-## 🔮 Future Enhancements
-
-- **AI Integration**: Chat with Alice for document generation
-- **Advanced Document Templates**: More legal document types
-- **Payment Integration**: Subscription management
-- **Admin Panel**: User and document management
-- **Mobile App**: React Native version
-- **Offline Support**: PWA capabilities
-- **Multi-language**: Internationalization support
+   Open http://localhost:3000 in your browser.
 
 ---
 
-**Note**: This is a modernized version of the original LawCraft project, maintaining the same visual design and user experience while upgrading to modern technologies.
+## Production Build & Deployment
+
+### Build Command
+```bash
+npm run build
+```
+
+### Deploy Options
+
+#### Option A: Vercel / Netlify
+1. Connect your repository to Vercel or Netlify.
+2. Set environment variables VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.
+3. Set build command `npm run build` and publish directory `dist`.
+
+#### Option B: Docker Container
+```bash
+docker build -t law-craft .
+docker run -p 80:80 law-craft
+```
+
+---
+
+## Testing
+
+Run unit tests via Vitest:
+```bash
+npm run test:run
+```
+
+---
+
+## License & Copyright
+
+Copyright (c) 2026 LawCraft AI. All Rights Reserved.
+See LICENSE and COPYRIGHT for terms.

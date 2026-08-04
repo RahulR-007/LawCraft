@@ -12,9 +12,15 @@ import {
   FormLabel,
   Alert,
   AlertIcon,
+  InputGroup,
+  InputRightElement,
+  IconButton,
   Link as ChakraLink,
   useToast,
+  Divider,
 } from '@chakra-ui/react'
+import { FiEye, FiEyeOff } from 'react-icons/fi'
+import { FcGoogle } from 'react-icons/fc'
 import { motion } from 'framer-motion'
 import { useAuth } from '../contexts/AuthContext'
 import { Link, useNavigate } from 'react-router-dom'
@@ -23,6 +29,7 @@ const MotionBox = motion(Box)
 
 const AuthPage: React.FC = () => {
   const [isSignUp, setIsSignUp] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
   const [formData, setFormData] = useState({
     fullname: '',
     email: '',
@@ -30,11 +37,37 @@ const AuthPage: React.FC = () => {
     confirmPassword: '',
   })
   const [loading, setLoading] = useState(false)
+  const [googleLoading, setGoogleLoading] = useState(false)
   const [error, setError] = useState('')
 
-  const { signIn, signUp } = useAuth()
+  const { signIn, signUp, signInWithGoogle } = useAuth()
   const navigate = useNavigate()
   const toast = useToast()
+
+  const handleGoogleSignIn = async () => {
+    setGoogleLoading(true)
+    setError('')
+    try {
+      const { error } = await signInWithGoogle()
+      if (error) {
+        const rawMsg = error.message || ''
+        if (rawMsg.includes('provider is not enabled') || rawMsg.includes('Unsupported provider')) {
+          setError('Google Sign-In is not enabled yet in your Supabase Dashboard. Go to Supabase Dashboard > Authentication > Providers > Google and toggle it ON.')
+        } else {
+          setError(rawMsg || 'Failed to initialize Google Sign-In')
+        }
+        setGoogleLoading(false)
+      }
+    } catch (err: any) {
+      const rawMsg = err?.message || ''
+      if (rawMsg.includes('provider is not enabled') || rawMsg.includes('Unsupported provider')) {
+        setError('Google Sign-In is not enabled yet in your Supabase Dashboard. Go to Supabase Dashboard > Authentication > Providers > Google and toggle it ON.')
+      } else {
+        setError(rawMsg || 'Google Sign-In failed')
+      }
+      setGoogleLoading(false)
+    }
+  }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
@@ -49,6 +82,12 @@ const AuthPage: React.FC = () => {
     setError('')
 
     if (isSignUp) {
+      if (formData.password.length < 8) {
+        setError('Password must be at least 8 characters long')
+        setLoading(false)
+        return
+      }
+
       if (formData.password !== formData.confirmPassword) {
         setError('Passwords do not match')
         setLoading(false)
@@ -160,6 +199,39 @@ const AuthPage: React.FC = () => {
                   </Alert>
                 )}
 
+                {/* Google OAuth Sign-In Button */}
+                <Button
+                  w="full"
+                  size="lg"
+                  variant="outline"
+                  leftIcon={<FcGoogle size={22} />}
+                  onClick={handleGoogleSignIn}
+                  isLoading={googleLoading}
+                  loadingText="Connecting to Google..."
+                  bg="rgba(255, 255, 255, 0.08)"
+                  color="white"
+                  borderColor="rgba(255, 255, 255, 0.2)"
+                  _hover={{
+                    bg: 'rgba(255, 255, 255, 0.15)',
+                    borderColor: 'rgba(255, 255, 255, 0.4)',
+                    transform: 'translateY(-1px)',
+                  }}
+                  _active={{
+                    bg: 'rgba(255, 255, 255, 0.2)',
+                  }}
+                  fontWeight="600"
+                >
+                  Continue with Google
+                </Button>
+
+                <HStack w="full" my={1}>
+                  <Divider borderColor="rgba(255, 255, 255, 0.15)" />
+                  <Text fontSize="xs" color="gray.400" textTransform="uppercase" px={2} whiteSpace="nowrap">
+                    or continue with email
+                  </Text>
+                  <Divider borderColor="rgba(255, 255, 255, 0.15)" />
+                </HStack>
+
                 {isSignUp && (
                   <>
                     <FormControl>
@@ -231,23 +303,36 @@ const AuthPage: React.FC = () => {
 
                 <FormControl>
                   <FormLabel color="white">Password</FormLabel>
-                  <Input
-                    name="password"
-                    type="password"
-                    value={formData.password}
-                    onChange={handleInputChange}
-                    placeholder="Enter your password"
-                    bg="rgba(255, 255, 255, 0.1)"
-                    border="1px solid"
-                    borderColor="rgba(255, 255, 255, 0.2)"
-                    color="white"
-                    _placeholder={{ color: 'gray.400' }}
-                    _focus={{
-                      borderColor: 'brand.500',
-                      boxShadow: '0 0 0 1px #970fff',
-                    }}
-                    required
-                  />
+                  <InputGroup>
+                    <Input
+                      name="password"
+                      type={showPassword ? 'text' : 'password'}
+                      value={formData.password}
+                      onChange={handleInputChange}
+                      placeholder="Enter your password"
+                      bg="rgba(255, 255, 255, 0.1)"
+                      border="1px solid"
+                      borderColor="rgba(255, 255, 255, 0.2)"
+                      color="white"
+                      _placeholder={{ color: 'gray.400' }}
+                      _focus={{
+                        borderColor: 'brand.500',
+                        boxShadow: '0 0 0 1px #970fff',
+                      }}
+                      required
+                    />
+                    <InputRightElement>
+                      <IconButton
+                        aria-label={showPassword ? 'Hide password' : 'Show password'}
+                        icon={showPassword ? <FiEyeOff /> : <FiEye />}
+                        variant="ghost"
+                        size="sm"
+                        color="gray.400"
+                        _hover={{ color: 'white' }}
+                        onClick={() => setShowPassword(!showPassword)}
+                      />
+                    </InputRightElement>
+                  </InputGroup>
                 </FormControl>
 
                 {isSignUp && (
