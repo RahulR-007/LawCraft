@@ -25,6 +25,7 @@ import { useNavigate } from 'react-router-dom'
 import { FiCheck, FiStar, FiZap, FiAward, FiArrowRight } from 'react-icons/fi'
 import { useAuth } from '../contexts/AuthContext'
 import FloatingNavigation from '../components/FloatingNavigation'
+import { logger } from '../lib/logger'
 
 // Declare Razorpay for TypeScript
 declare global {
@@ -46,6 +47,20 @@ interface PricingPlan {
     buttonText: string
     buttonVariant: 'solid' | 'outline'
     icon: React.ElementType
+}
+
+const loadRazorpayScript = (): Promise<boolean> => {
+    return new Promise((resolve) => {
+        if ((window as any).Razorpay) {
+            resolve(true)
+            return
+        }
+        const script = document.createElement('script')
+        script.src = 'https://checkout.razorpay.com/v1/checkout.js'
+        script.onload = () => resolve(true)
+        script.onerror = () => resolve(false)
+        document.body.appendChild(script)
+    })
 }
 
 const Pricing: React.FC = () => {
@@ -81,16 +96,16 @@ const Pricing: React.FC = () => {
                     isPopular: false
                 },
                 {
-                    id: 'basic',
-                    name: 'Basic',
+                    id: 'professional',
+                    name: 'Professional',
                     price: 29,
                     currency: 'INR',
                     interval: 'month',
-                    description: 'Enhanced features for individuals',
+                    description: 'Enhanced features for individuals & teams',
                     features: ['20 Documents per month', 'All templates', 'Priority support', 'Document history'],
                     tokens: 20,
                     icon: FiStar,
-                    buttonText: 'Choose Basic',
+                    buttonText: 'Choose Professional',
                     buttonVariant: 'solid' as const,
                     isPopular: true
                 },
@@ -101,8 +116,8 @@ const Pricing: React.FC = () => {
                     currency: 'INR',
                     interval: 'month',
                     description: 'Full access for professionals',
-                    features: ['Unlimited Documents', 'All templates', 'Premium support', 'Document history', 'AI assistance', 'Custom templates'],
-                    tokens: 999,
+                    features: ['40 Documents per month', 'All templates', 'Premium support', 'Document history', 'AI assistance', 'Custom templates'],
+                    tokens: 40,
                     icon: FiAward,
                     buttonText: 'Choose Premium',
                     buttonVariant: 'solid' as const,
@@ -165,44 +180,92 @@ const Pricing: React.FC = () => {
         setProcessingPayment(plan.id)
 
         try {
-            // For demo purposes, simulate payment success
-            toast({
-                title: 'Payment Simulation',
-                description: `This is a demo. In production, this would process payment for ${plan.name} plan (₹${plan.price}).`,
-                status: 'info',
-                duration: 5000,
-                isClosable: true,
-            })
-
-            // Simulate processing delay
-            await new Promise(resolve => setTimeout(resolve, 2000))
-
-            // Update user metadata with new plan
-            if (user && updateUser) {
-                await updateUser({
-                    plan_name: plan.name,
-                    tokens: plan.tokens
-                })
-
+            const loaded = await loadRazorpayScript()
+            if (!loaded) {
                 toast({
-                    title: 'Plan Updated!',
-                    description: `You have been upgraded to the ${plan.name} plan with ${plan.tokens} tokens.`,
-                    status: 'success',
+                    title: 'Payment Gateway Error',
+                    description: 'Could not load Razorpay checkout SDK. Check your internet connection.',
+                    status: 'error',
                     duration: 5000,
                     isClosable: true,
                 })
+                setProcessingPayment(null)
+                return
             }
 
+            const razorpayKey = import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_Deqs4AJQSSVZn0'
+
+            const calculatedPrice = isAnnual ? Math.round(plan.price * 0.8) : plan.price
+
+            const options = {
+                key: razorpayKey,
+                amount: calculatedPrice * 100, // Amount in paise
+                currency: 'INR',
+                name: 'LawCraft AI Protocol',
+                description: `Upgrade to ${plan.name} Plan (${plan.tokens} Documents/month)`,
+                image: '/favicon.ico',
+                handler: async function (response: any) {
+                    setProcessingPayment(null)
+                    try {
+                        if (updateUser) {
+                            await updateUser({
+                                plan_name: plan.name,
+                                tokens: plan.tokens
+                            })
+                        }
+
+                        toast({
+                            title: 'Payment Successful! 🎉',
+                            description: `You have been upgraded to the ${plan.name} plan with ${plan.tokens} tokens per month. Ref: ${response?.razorpay_payment_id || 'RZP_PAID'}`,
+                            status: 'success',
+                            duration: 6000,
+                            isClosable: true,
+                        })
+                    } catch (err: any) {
+                        logger.error('Plan update error:', err)
+                        toast({
+                            title: 'Plan Update Error',
+                            description: err?.message || 'Payment processed but account update failed.',
+                            status: 'error',
+                            duration: 5000,
+                            isClosable: true,
+                        })
+                    }
+                },
+                modal: {
+                    ondismiss: function () {
+                        setProcessingPayment(null)
+                        toast({
+                            title: 'Payment Cancelled',
+                            description: 'You cancelled the payment transaction.',
+                            status: 'info',
+                            duration: 3000,
+                            isClosable: true,
+                        })
+                    }
+                },
+                prefill: {
+                    name: user?.user_metadata?.fullname || user?.user_metadata?.name || '',
+                    email: user?.email || '',
+                    contact: user?.user_metadata?.phone || '',
+                },
+                theme: {
+                    color: '#970fff'
+                }
+            }
+
+            const rzp = new (window as any).Razorpay(options)
+            rzp.open()
+
         } catch (error) {
-            console.error('Payment error:', error)
+            logger.error('Payment error:', error)
             toast({
                 title: 'Payment Error',
-                description: 'There was an error processing your payment. Please try again.',
+                description: 'There was an error launching the Razorpay payment modal.',
                 status: 'error',
                 duration: 5000,
                 isClosable: true,
             })
-        } finally {
             setProcessingPayment(null)
         }
     }
@@ -428,11 +491,11 @@ const Pricing: React.FC = () => {
 
                                                 <HStack align="baseline" spacing={1}>
                                                     <Text fontSize="4xl" fontWeight="bold" color="white">
-                                                        ₹{plan.price}
+                                                        ₹{isAnnual && plan.price > 0 ? Math.round(plan.price * 0.8) : plan.price}
                                                     </Text>
                                                     {plan.price > 0 && (
                                                         <Text fontSize="md" color="gray.400">
-                                                            {plan.interval}
+                                                            /{isAnnual ? 'mo (billed annually)' : 'month'}
                                                         </Text>
                                                     )}
                                                 </HStack>

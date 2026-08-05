@@ -232,6 +232,15 @@ const Chatbot: React.FC = () => {
         scrollToBottom()
     }, [messages])
 
+    useEffect(() => {
+        const handleOpen = () => {
+            setIsOpen(true)
+            setIsMinimized(false)
+        }
+        window.addEventListener('open-chatbot', handleOpen)
+        return () => window.removeEventListener('open-chatbot', handleOpen)
+    }, [])
+
     // Auto-focus input when chat opens and is not minimized
     useEffect(() => {
         if (isOpen && !isMinimized && inputRef.current) {

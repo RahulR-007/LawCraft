@@ -1,5 +1,6 @@
 "use client";
 import { useRef, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   Mail,
@@ -160,6 +161,7 @@ export const FooterBackgroundGradient = () => {
 };
 
 export const HoverFooter = () => {
+  const navigate = useNavigate();
   const footerLinks = [
     {
       title: "Legal Solutions",
@@ -266,7 +268,15 @@ export const HoverFooter = () => {
                   <li key={link.label} style={{ listStyle: "none", position: "relative" }}>
                     <a
                       href={link.href}
-                      style={{ color: "#9ca3af", textDecoration: "none", transition: "color 0.2s ease" }}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        if (link.label === "Live AI Assistant") {
+                          window.dispatchEvent(new CustomEvent('open-chatbot'));
+                        } else if (link.href && link.href.startsWith('/')) {
+                          navigate(link.href);
+                        }
+                      }}
+                      style={{ color: "#9ca3af", textDecoration: "none", transition: "color 0.2s ease", cursor: "pointer" }}
                       onMouseEnter={(e) => (e.currentTarget.style.color = "#970fff")}
                       onMouseLeave={(e) => (e.currentTarget.style.color = "#9ca3af")}
                     >

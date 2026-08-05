@@ -109,7 +109,7 @@ const Dashboard: React.FC = () => {
     return matchesSearch && matchesType
   })
 
-  const tokensRemaining = user?.user_metadata?.tokens ?? 20
+  const tokensRemaining = user?.user_metadata?.tokens ?? 2
 
   return (
     <Box

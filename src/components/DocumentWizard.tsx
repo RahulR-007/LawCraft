@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { useLocation } from 'react-router-dom'
 import {
     Box,
     VStack,
@@ -9,6 +10,7 @@ import {
     SimpleGrid,
     FormControl,
     FormLabel,
+    FormErrorMessage,
     Input,
     Textarea,
     Select,
@@ -111,6 +113,24 @@ export const DocumentWizard: React.FC<DocumentWizardProps> = ({ onDocumentGenera
     const [result, setResult] = useState<DocumentGenerationResult | null>(null)
     const [exportingDocx, setExportingDocx] = useState(false)
 
+    const location = useLocation()
+
+    // Pre-populate from location.state if navigated from Law Updates
+    useEffect(() => {
+        const state = location.state as any
+        if (state?.lawCategory) {
+            const cat = state.lawCategory.toLowerCase()
+            const matched = DOCUMENT_TYPES.find(d => d.id === cat || d.id.includes(cat) || cat.includes(d.id))
+            if (matched) {
+                setDocumentType(matched.id)
+            }
+        }
+        if (state?.lawTitle || state?.summary) {
+            const contextMsg = `Compliance Focus: ${state.lawTitle || 'Statute Update'}\nNotes: ${state.summary || ''}`
+            setCustomDetails(contextMsg)
+        }
+    }, [location])
+
     // Update parties whenever documentType changes
     useEffect(() => {
         const labels = getPartyLabels(documentType)
@@ -164,6 +184,8 @@ export const DocumentWizard: React.FC<DocumentWizardProps> = ({ onDocumentGenera
         duration,
     }
 
+    const [formErrors, setFormErrors] = useState<Record<string, string>>({})
+
     const handleNext = () => {
         if (step === 1) {
             setStep(2)
@@ -173,6 +195,12 @@ export const DocumentWizard: React.FC<DocumentWizardProps> = ({ onDocumentGenera
         if (step === 2) {
             const errors = validateDocumentForm(formInput)
             if (errors.length > 0) {
+                const errMap: Record<string, string> = {}
+                errors.forEach(e => {
+                    errMap[e.field] = e.message
+                })
+                setFormErrors(errMap)
+
                 toast({
                     title: 'Validation Error',
                     description: errors[0].message,
@@ -182,6 +210,7 @@ export const DocumentWizard: React.FC<DocumentWizardProps> = ({ onDocumentGenera
                 })
                 return
             }
+            setFormErrors({})
             setStep(3)
             return
         }
@@ -673,17 +702,27 @@ export const DocumentWizard: React.FC<DocumentWizardProps> = ({ onDocumentGenera
                                                         </Badge>
                                                     </HStack>
 
-                                                    <FormControl isRequired>
+                                                    <FormControl isRequired isInvalid={!!formErrors[`parties.${p.role}`]}>
                                                         <FormLabel fontSize="xs" color={colorMode === 'dark' ? 'white' : 'gray.700'}>
                                                             Full Name / Legal Entity
                                                         </FormLabel>
                                                         <Input
                                                             placeholder={`e.g., ${index === 0 ? 'Acme Corp Pvt Ltd' : 'John Doe'}`}
                                                             value={p.name}
-                                                            onChange={(e) => handlePartyChange(index, 'name', e.target.value)}
+                                                            onChange={(e) => {
+                                                                handlePartyChange(index, 'name', e.target.value)
+                                                                if (formErrors[`parties.${p.role}`]) {
+                                                                    setFormErrors(prev => ({ ...prev, [`parties.${p.role}`]: '' }))
+                                                                }
+                                                            }}
                                                             borderRadius="xl"
                                                             size="sm"
                                                         />
+                                                        {formErrors[`parties.${p.role}`] && (
+                                                            <FormErrorMessage fontSize="xs">
+                                                                {formErrors[`parties.${p.role}`]}
+                                                            </FormErrorMessage>
+                                                        )}
                                                     </FormControl>
 
                                                     <FormControl>
@@ -747,7 +786,7 @@ export const DocumentWizard: React.FC<DocumentWizardProps> = ({ onDocumentGenera
                                 )}
 
                                 {/* Custom Details Textarea */}
-                                <FormControl isRequired>
+                                <FormControl isRequired isInvalid={!!formErrors['customDetails']}>
                                     <FormLabel fontSize="xs" color={colorMode === 'dark' ? 'white' : 'gray.700'}>
                                         Document Purpose & Specific Terms
                                     </FormLabel>
@@ -755,10 +794,20 @@ export const DocumentWizard: React.FC<DocumentWizardProps> = ({ onDocumentGenera
                                         placeholder="Describe the scope of work, payment milestones, specific obligations, confidentiality rules, or special conditions..."
                                         rows={4}
                                         value={customDetails}
-                                        onChange={(e) => setCustomDetails(e.target.value)}
+                                        onChange={(e) => {
+                                            setCustomDetails(e.target.value)
+                                            if (formErrors['customDetails']) {
+                                                setFormErrors(prev => ({ ...prev, customDetails: '' }))
+                                            }
+                                        }}
                                         borderRadius="xl"
                                         size="sm"
                                     />
+                                    {formErrors['customDetails'] && (
+                                        <FormErrorMessage fontSize="xs">
+                                            {formErrors['customDetails']}
+                                        </FormErrorMessage>
+                                    )}
                                 </FormControl>
                             </VStack>
                         </Card>

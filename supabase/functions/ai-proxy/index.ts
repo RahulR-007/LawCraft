@@ -109,13 +109,25 @@ serve(async (req: Request) => {
             )
         }
 
-        // ── 4. Parse request body ──────────────────────────────────
+        // ── 4. Parse request body & Server-Side Safety Validation ──
         const body = await req.json()
         const { messages, options = {} } = body
 
         if (!messages || !Array.isArray(messages)) {
             return new Response(
                 JSON.stringify({ error: 'Invalid request: messages array required' }),
+                { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            )
+        }
+
+        // Server-Side Safety Keyword Validation
+        const RESTRICTED_TERMS = ['illegal', 'money laundering', 'tax evasion', 'fraud', 'forgery', 'bribe', 'extortion', 'fake invoice', 'ponzi']
+        const promptText = JSON.stringify(messages).toLowerCase()
+        const hasForbiddenTerms = RESTRICTED_TERMS.some(term => promptText.includes(term))
+
+        if (hasForbiddenTerms) {
+            return new Response(
+                JSON.stringify({ error: 'Security Policy Violation: Prompt contains forbidden keywords or illegal intent.' }),
                 { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
             )
         }

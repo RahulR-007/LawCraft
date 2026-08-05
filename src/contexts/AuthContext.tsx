@@ -89,7 +89,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }
 
   const signInWithGoogle = async () => {
-    const redirectTo = `${window.location.origin}/dashboard`
+    const returnTo = sessionStorage.getItem('lawcraft_redirect') || '/dashboard'
+    const targetPath = returnTo.startsWith('/') ? returnTo : '/' + returnTo
+    const redirectTo = `${window.location.origin}${targetPath}`
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {

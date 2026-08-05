@@ -37,8 +37,11 @@ import {
     FiShield,
     FiFileText,
 } from 'react-icons/fi'
+import { useNavigate } from 'react-router-dom'
 import FloatingNavigation from '../components/FloatingNavigation'
+import Chatbot from '../components/Chatbot'
 import { fetchLawUpdates } from '../lib/secureClient'
+import { FiCpu, FiArrowRight } from 'react-icons/fi'
 
 const MotionBox = motion(Box)
 
@@ -88,6 +91,7 @@ const IMPACT_LABELS: Record<string, string> = {
 }
 
 const LawUpdates: React.FC = () => {
+    const navigate = useNavigate()
     const { colorMode } = useColorMode()
     const [updates, setUpdates] = useState<LawUpdate[]>([])
     const [loading, setLoading] = useState(true)
@@ -486,8 +490,8 @@ const LawUpdates: React.FC = () => {
                                                             )}
                                                         </HStack>
 
-                                                        {/* Impact Tags */}
-                                                        <HStack spacing={1} flexWrap="wrap">
+                                                        {/* Impact Tags & Actions */}
+                                                        <HStack spacing={2} flexWrap="wrap">
                                                             {update.impact_areas?.map((area) => (
                                                                 <Tag
                                                                     key={area}
@@ -504,6 +508,35 @@ const LawUpdates: React.FC = () => {
                                                             ))}
                                                         </HStack>
                                                     </Flex>
+
+                                                    {/* Action Buttons */}
+                                                    <HStack spacing={3} pt={2} w="full" justify="flex-end">
+                                                        <Button
+                                                            size="xs"
+                                                            colorScheme="purple"
+                                                            leftIcon={<FiCpu />}
+                                                            onClick={() => window.dispatchEvent(new CustomEvent('open-chatbot'))}
+                                                        >
+                                                            Analyze Impact
+                                                        </Button>
+                                                        <Button
+                                                            size="xs"
+                                                            variant="outline"
+                                                            colorScheme="purple"
+                                                            leftIcon={<FiArrowRight />}
+                                                            onClick={() => {
+                                                                navigate('/generate', {
+                                                                    state: {
+                                                                        lawCategory: update.law_category,
+                                                                        lawTitle: update.law_title,
+                                                                        summary: update.summary,
+                                                                    }
+                                                                })
+                                                            }}
+                                                        >
+                                                            Generate Compliant Contract
+                                                        </Button>
+                                                    </HStack>
                                                 </VStack>
                                             </CardBody>
                                         </Card>
@@ -514,6 +547,7 @@ const LawUpdates: React.FC = () => {
                     )}
                 </VStack>
             </Container>
+            <Chatbot />
         </Box>
     )
 }

@@ -166,6 +166,18 @@ serve(async (req: Request) => {
             )
         }
 
+        // Server-Side Safety Keyword Validation
+        const RESTRICTED_TERMS = ['illegal', 'money laundering', 'tax evasion', 'fraud', 'forgery', 'bribe', 'extortion', 'fake invoice', 'ponzi']
+        const inputStr = JSON.stringify(input).toLowerCase()
+        const hasForbiddenTerms = RESTRICTED_TERMS.some(term => inputStr.includes(term))
+
+        if (hasForbiddenTerms) {
+            return new Response(
+                JSON.stringify({ error: 'Security Policy Violation: Document input contains forbidden keywords or illegal intent.' }),
+                { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            )
+        }
+
         // ── 4. RAG: Retrieve relevant legal clauses ────────────────
         // Query legal_clauses table for matching jurisdiction + document type
         const { data: relevantClauses } = await supabase

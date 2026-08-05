@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { ChakraProvider, Box, Spinner, Text, VStack } from '@chakra-ui/react'
 import React, { Suspense } from 'react'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
@@ -35,12 +35,13 @@ const LoadingSpinner = () => (
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, loading } = useAuth()
+  const location = useLocation()
 
   if (loading) {
     return <LoadingSpinner />
   }
 
-  return user ? <>{children}</> : <Navigate to="/auth" replace />
+  return user ? <>{children}</> : <Navigate to="/auth" state={{ from: location }} replace />
 }
 
 function App() {
@@ -48,7 +49,7 @@ function App() {
     <ErrorBoundary>
       <ChakraProvider theme={theme}>
         <AuthProvider>
-          <Router>
+          <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
             <Suspense fallback={<LoadingSpinner />}>
               <Routes>
                 <Route path="/" element={<Landing />} />

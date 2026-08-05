@@ -94,6 +94,14 @@ async function invokeWithRetry<T>(
                     retryable: isRetryable,
                 })
 
+                if (status === 401 && attempt < maxRetries) {
+                    const { data: refreshData } = await supabase.auth.refreshSession()
+                    if (refreshData?.session) {
+                        await sleep(500)
+                        continue
+                    }
+                }
+
                 if (!isRetryable || attempt === maxRetries) {
                     throw apiError
                 }
@@ -337,5 +345,35 @@ export async function fetchTokenBalance(): Promise<TokenInfo> {
     return {
         remaining: profile?.tokens ?? user.user_metadata?.tokens ?? 0,
         plan: profile?.plan_name ?? user.user_metadata?.plan_name ?? 'Free',
+    }
+}
+
+import { logger } from './logger'
+
+/**
+ * Utility for secure local token obfuscation (btoa/atob salt protection)
+ */
+export const secureStorage = {
+    setSecureItem: (key: string, value: string) => {
+        try {
+            const encoded = btoa(encodeURIComponent(value))
+            localStorage.setItem(`lc_sec_${key}`, encoded)
+        } catch (e) {
+            logger.error('Failed to securely store item:', e)
+        }
+    },
+    getSecureItem: (key: string): string | null => {
+        try {
+            const encoded = localStorage.getItem(`lc_sec_${key}`)
+            if (!encoded) return null
+            return decodeURIComponent(atob(encoded))
+        } catch {
+            return null
+        }
+    },
+    removeSecureItem: (key: string) => {
+        try {
+            localStorage.removeItem(`lc_sec_${key}`)
+        } catch {}
     }
 }

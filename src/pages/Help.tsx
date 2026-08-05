@@ -26,6 +26,8 @@ import {
 } from '@chakra-ui/react'
 import { motion } from 'framer-motion'
 import FloatingNavigation from '../components/FloatingNavigation'
+import Chatbot from '../components/Chatbot'
+import { supabase } from '../lib/supabase'
 import {
     FiSearch,
     FiSend,
@@ -129,7 +131,9 @@ const Help: React.FC = () => {
         return matchesCategory && matchesSearch
     })
 
-    const handleContactSubmit = (e: React.FormEvent) => {
+    const [submitting, setSubmitting] = useState(false)
+
+    const handleContactSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
 
         if (!contactForm.name || !contactForm.email || !contactForm.message) {
@@ -143,21 +147,46 @@ const Help: React.FC = () => {
             return
         }
 
-        toast({
-            title: 'Message Sent!',
-            description: 'Thank you for contacting us. We\'ll get back to you within 24 hours.',
-            status: 'success',
-            duration: 5000,
-            isClosable: true,
-        })
+        setSubmitting(true)
+        try {
+            const { error } = await supabase.from('contact_submissions').insert([
+                {
+                    name: contactForm.name,
+                    email: contactForm.email,
+                    subject: contactForm.subject,
+                    category: contactForm.category,
+                    message: contactForm.message,
+                }
+            ])
 
-        setContactForm({
-            name: '',
-            email: '',
-            subject: '',
-            category: 'general',
-            message: ''
-        })
+            if (error) throw error
+
+            toast({
+                title: 'Message Sent!',
+                description: 'Thank you for contacting us. We\'ll get back to you within 24 hours.',
+                status: 'success',
+                duration: 5000,
+                isClosable: true,
+            })
+
+            setContactForm({
+                name: '',
+                email: '',
+                subject: '',
+                category: 'general',
+                message: ''
+            })
+        } catch (err: any) {
+            toast({
+                title: 'Submission Failed',
+                description: err?.message || 'There was an error sending your message. Please try again.',
+                status: 'error',
+                duration: 5000,
+                isClosable: true,
+            })
+        } finally {
+            setSubmitting(false)
+        }
     }
 
     return (
@@ -196,8 +225,8 @@ const Help: React.FC = () => {
                             {
                                 icon: FiMessageCircle,
                                 title: 'Live Chat',
-                                desc: 'Get instant help',
-                                action: () => toast({ title: 'Chat feature coming soon!', status: 'info' })
+                                desc: 'Get instant AI assistance',
+                                action: () => window.dispatchEvent(new CustomEvent('open-chatbot'))
                             },
                             {
                                 icon: FiMail,
@@ -484,6 +513,7 @@ const Help: React.FC = () => {
                                         bg="linear-gradient(135deg, #970fff, #7817ff)"
                                         color="white"
                                         rightIcon={<FiSend />}
+                                        isLoading={submitting}
                                         _hover={{
                                             bg: 'linear-gradient(135deg, #7817ff, #5a0bd9)',
                                             transform: 'translateY(-2px)'
@@ -498,6 +528,7 @@ const Help: React.FC = () => {
                     </Card>
                 </MotionBox>
             </Container>
+            <Chatbot />
         </Box>
     )
 }

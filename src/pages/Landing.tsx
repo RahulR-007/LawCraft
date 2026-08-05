@@ -72,7 +72,7 @@ const Landing: React.FC = () => {
           badgeText="Autonomous Legal Intelligence Engine"
           description="A new layer for modern legal architecture. Draft, analyze, and enforce legally sound contracts powered by real-time RAG intelligence and verified government statutes."
           ctaText="Start Drafting Contracts"
-          onCtaClick={() => navigate('/auth')}
+          onCtaClick={() => navigate('/generate')}
         />
       </Box>
 
@@ -208,7 +208,7 @@ const Landing: React.FC = () => {
                   bg="linear-gradient(135deg, #970fff, #7817ff)"
                   color="white"
                   rightIcon={<FiArrowRight />}
-                  onClick={() => navigate('/auth')}
+                  onClick={() => navigate('/generate')}
                   boxShadow="0 8px 25px rgba(151, 15, 255, 0.4)"
                   _hover={{ transform: 'translateY(-2px)' }}
                 >

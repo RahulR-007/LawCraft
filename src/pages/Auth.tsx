@@ -23,7 +23,7 @@ import { FiEye, FiEyeOff } from 'react-icons/fi'
 import { FcGoogle } from 'react-icons/fc'
 import { motion } from 'framer-motion'
 import { useAuth } from '../contexts/AuthContext'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 
 const MotionBox = motion(Box)
 
@@ -42,12 +42,22 @@ const AuthPage: React.FC = () => {
 
   const { signIn, signUp, signInWithGoogle } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
   const toast = useToast()
+
+  const from = (location.state as any)?.from?.pathname || sessionStorage.getItem('lawcraft_redirect') || '/dashboard'
+
+  React.useEffect(() => {
+    if ((location.state as any)?.from?.pathname) {
+      sessionStorage.setItem('lawcraft_redirect', (location.state as any).from.pathname)
+    }
+  }, [location])
 
   const handleGoogleSignIn = async () => {
     setGoogleLoading(true)
     setError('')
     try {
+      sessionStorage.setItem('lawcraft_redirect', from)
       const { error } = await signInWithGoogle()
       if (error) {
         const rawMsg = error.message || ''
@@ -118,7 +128,8 @@ const AuthPage: React.FC = () => {
       if (error) {
         setError(error.message || 'Login failed')
       } else {
-        navigate('/dashboard')
+        sessionStorage.removeItem('lawcraft_redirect')
+        navigate(from, { replace: true })
       }
     }
 

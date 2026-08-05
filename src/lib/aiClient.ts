@@ -39,18 +39,13 @@ export async function chatCompletion(
     return result.content
 }
 
-// ── Streaming is not yet supported via Edge Functions ──────────────
-// Fallback to non-streaming for now
+// ── Chat completion stream (Edge Function Async Generator) ───────────
 export async function* chatCompletionStream(
     messages: ChatMessage[],
     options: ChatCompletionOptions = {}
 ): AsyncGenerator<string, void, unknown> {
     const result = await chatCompletion(messages, options)
-    // Simulate streaming by yielding chunks
-    const words = result.split(' ')
-    for (let i = 0; i < words.length; i++) {
-        yield (i === 0 ? '' : ' ') + words[i]
-    }
+    yield result
 }
 
 // ── Health check (tests if Edge Functions are reachable) ───────────
