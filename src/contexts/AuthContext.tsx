@@ -109,8 +109,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }
 
   const updateUser = async (userData: any) => {
+    // Security: Strip billing & token fields from client-side metadata updates
+    const { tokens, plan_name, documents_generated, ...safeUserData } = userData || {}
+
     const { error } = await supabase.auth.updateUser({
-      data: userData
+      data: safeUserData
     })
     if (error) throw error
 
