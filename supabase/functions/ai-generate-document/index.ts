@@ -148,7 +148,7 @@ serve(async (req: Request) => {
             .eq('id', user.id)
             .single()
 
-        const currentTokens = profile?.tokens ?? user.user_metadata?.tokens ?? 0
+        const currentTokens = profile?.tokens ?? user.user_metadata?.tokens ?? 10
         if (currentTokens <= 0) {
             return new Response(
                 JSON.stringify({ error: 'No tokens remaining. Please upgrade your plan.' }),

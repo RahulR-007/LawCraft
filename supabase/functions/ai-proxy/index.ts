@@ -81,22 +81,28 @@ serve(async (req: Request) => {
         }
 
         // ── 3. Check token quota ───────────────────────────────────
-        const { data: profile, error: profileError } = await supabase
+        const { data: profile } = await supabase
             .from('profiles')
             .select('tokens, plan_name')
             .eq('id', user.id)
             .single()
 
-        if (profileError || !profile) {
-            // If profile doesn't exist, use user_metadata as fallback
-            const tokens = user.user_metadata?.tokens ?? 0
-            if (tokens <= 0) {
-                return new Response(
-                    JSON.stringify({ error: 'No tokens remaining. Please upgrade your plan.' }),
-                    { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-                )
-            }
-        } else if (profile.tokens <= 0) {
+        let availableTokens = 10
+        if (profile) {
+            availableTokens = profile.tokens
+        } else {
+            availableTokens = user.user_metadata?.tokens ?? 10
+            // Auto-create profile for Google OAuth / new users if missing
+            await supabase.from('profiles').upsert({
+                id: user.id,
+                email: user.email,
+                fullname: user.user_metadata?.full_name || user.user_metadata?.name || user.user_metadata?.fullname || 'User',
+                tokens: 10,
+                plan_name: 'Free'
+            })
+        }
+
+        if (availableTokens <= 0) {
             return new Response(
                 JSON.stringify({ error: 'No tokens remaining. Please upgrade your plan.' }),
                 { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
