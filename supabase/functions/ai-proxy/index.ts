@@ -87,17 +87,17 @@ serve(async (req: Request) => {
             .eq('id', user.id)
             .single()
 
-        let availableTokens = 10
+        let availableTokens = 2
         if (profile) {
             availableTokens = profile.tokens
         } else {
-            availableTokens = user.user_metadata?.tokens ?? 10
+            availableTokens = user.user_metadata?.tokens ?? 2
             // Auto-create profile for Google OAuth / new users if missing
             await supabase.from('profiles').upsert({
                 id: user.id,
                 email: user.email,
                 fullname: user.user_metadata?.full_name || user.user_metadata?.name || user.user_metadata?.fullname || 'User',
-                tokens: 10,
+                tokens: 2,
                 plan_name: 'Free'
             })
         }
