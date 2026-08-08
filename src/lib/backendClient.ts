@@ -348,3 +348,16 @@ export async function backendExportDocx(_title: string, content: string): Promis
 
     return Packer.toBlob(doc)
 }
+
+export async function downloadDocx(content: string, filename: string = 'document') {
+    const blob = await backendExportDocx(filename, content)
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `${filename.replace(/[^a-z0-9_-]/gi, '_')}.docx`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+}
+

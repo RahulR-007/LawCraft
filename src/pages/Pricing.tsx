@@ -26,6 +26,7 @@ import { FiCheck, FiStar, FiZap, FiAward, FiArrowRight } from 'react-icons/fi'
 import { useAuth } from '../contexts/AuthContext'
 import FloatingNavigation from '../components/FloatingNavigation'
 import { logger } from '../lib/logger'
+import { verifyPayment } from '../lib/secureClient'
 
 // Declare Razorpay for TypeScript
 declare global {
@@ -66,7 +67,7 @@ const loadRazorpayScript = (): Promise<boolean> => {
 const Pricing: React.FC = () => {
     const navigate = useNavigate()
     const toast = useToast()
-    const { user, updateUser } = useAuth()
+    const { user, refreshProfile } = useAuth()
     const [plans, setPlans] = useState<PricingPlan[]>([])
     const [loading, setLoading] = useState(true)
     const [processingPayment, setProcessingPayment] = useState<string | null>(null)
@@ -154,7 +155,7 @@ const Pricing: React.FC = () => {
         if (plan.id === 'free') {
             toast({
                 title: 'You are already on the Free plan',
-                description: 'Upgrade to Advanced or Premium for more features.',
+                description: 'Upgrade to Professional or Premium for more features.',
                 status: 'info',
                 duration: 5000,
                 isClosable: true,
@@ -207,16 +208,20 @@ const Pricing: React.FC = () => {
                 handler: async function (response: any) {
                     setProcessingPayment(null)
                     try {
-                        if (updateUser) {
-                            await updateUser({
-                                plan_name: plan.name,
-                                tokens: plan.tokens
-                            })
+                        const verifyRes = await verifyPayment({
+                            planId: plan.id,
+                            razorpayPaymentId: response?.razorpay_payment_id || `pay_${Date.now()}`,
+                            razorpayOrderId: response?.razorpay_order_id,
+                            razorpaySignature: response?.razorpay_signature,
+                        })
+
+                        if (refreshProfile) {
+                            await refreshProfile()
                         }
 
                         toast({
                             title: 'Payment Successful! 🎉',
-                            description: `You have been upgraded to the ${plan.name} plan with ${plan.tokens} tokens per month. Ref: ${response?.razorpay_payment_id || 'RZP_PAID'}`,
+                            description: verifyRes.message || `Upgraded to ${plan.name} plan! Ref: ${response?.razorpay_payment_id || 'RZP_PAID'}`,
                             status: 'success',
                             duration: 6000,
                             isClosable: true,
@@ -552,16 +557,16 @@ const Pricing: React.FC = () => {
                         <Flex direction={{ base: 'column', md: 'row' }} gap={8} w="full">
                             {[
                                 {
-                                    question: "Can I change my plan anytime?",
-                                    answer: "Yes! You can upgrade or downgrade your plan at any time. Changes take effect immediately."
+                                    question: "Can I upgrade my plan anytime?",
+                                    answer: "Yes! You can upgrade your plan anytime to receive instant document generation token allocations."
                                 },
                                 {
-                                    question: "Is there a free trial?",
-                                    answer: "Yes, we offer a 14-day free trial for all plans so you can explore our features risk-free."
+                                    question: "How does the Free plan work?",
+                                    answer: "Our Free plan includes 2 document generation tokens upon sign-up so you can explore our AI document generator risk-free."
                                 },
                                 {
                                     question: "What's included in support?",
-                                    answer: "All plans include email support. Professional and Enterprise plans get priority support and dedicated assistance."
+                                    answer: "All plans include email support. Professional and Premium plans receive priority support and document history access."
                                 }
                             ].map((faq, index) => (
                                 <Card
@@ -624,8 +629,8 @@ const Pricing: React.FC = () => {
                                     color="white"
                                     rightIcon={<FiArrowRight />}
                                     onClick={() => {
-                                        const advancedPlan = plans.find(p => p.name === 'Advanced')
-                                        if (advancedPlan) handlePlanSelection(advancedPlan)
+                                        const targetPlan = plans.find(p => p.name === 'Professional') || plans[1] || plans[0]
+                                        if (targetPlan) handlePlanSelection(targetPlan)
                                     }}
                                     _hover={{
                                         bg: 'linear-gradient(135deg, #7817ff, #5a0bd9)',

@@ -199,7 +199,7 @@ export const HoverFooter = () => {
     },
     {
       icon: <MapPin size={18} style={{ color: "#970fff" }} />,
-      text: "Enterprise Legal Tech HQ",
+      text: "LawCraft Legal Platform",
     },
   ];
 
@@ -226,11 +226,11 @@ export const HoverFooter = () => {
       }}
     >
       <div
-        className="max-w-7xl mx-auto p-14 z-40 relative"
+        className="max-w-7xl mx-auto z-40 relative"
         style={{
           maxWidth: "80rem",
           margin: "0 auto",
-          padding: "3.5rem",
+          padding: "clamp(1.25rem, 4vw, 3.5rem)",
           position: "relative",
           zIndex: 40,
         }}
@@ -359,7 +359,7 @@ export const HoverFooter = () => {
       </div>
 
       {/* Text hover effect */}
-      <div style={{ display: "flex", justifyContent: "center", height: "16rem", marginTop: "-6rem", marginBottom: "-2rem", position: "relative", zIndex: 50 }}>
+      <div style={{ display: "flex", justifyContent: "center", height: "clamp(8rem, 15vw, 16rem)", marginTop: "clamp(-3rem, -4vw, -6rem)", marginBottom: "-2rem", position: "relative", zIndex: 50, overflow: "hidden" }}>
         <TextHoverEffect text="LawCraft" className="z-50" />
       </div>
 

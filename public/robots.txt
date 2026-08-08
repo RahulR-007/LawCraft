@@ -1,0 +1,14 @@
+# LawCraft AI Robots.txt
+User-agent: *
+Allow: /
+Allow: /generate
+Allow: /pricing
+Allow: /help
+Allow: /law-updates
+
+Disallow: /dashboard
+Disallow: /profile
+Disallow: /ai-settings
+Disallow: /auth
+
+Sitemap: https://lawcraft.ai/sitemap.xml

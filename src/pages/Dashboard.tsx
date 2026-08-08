@@ -25,6 +25,14 @@ import {
   MenuItem,
   IconButton,
   Spinner,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalCloseButton,
+  ModalFooter,
+  useDisclosure,
 } from '@chakra-ui/react'
 import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
@@ -40,13 +48,16 @@ import {
   FiBookOpen,
   FiArrowRight,
   FiTrendingUp,
+  FiDownload,
 } from 'react-icons/fi'
 import Chatbot from '../components/Chatbot'
 import FloatingNavigation from '../components/FloatingNavigation'
 import CyberMatrixHero from '../components/ui/cyber-matrix-hero'
 import HoverFooter from '../components/ui/hover-footer'
-import { fetchUserDocuments } from '../lib/secureClient'
+import { fetchUserDocuments, fetchDocumentById } from '../lib/secureClient'
 import { useAuth } from '../contexts/AuthContext'
+import { logger } from '../lib/logger'
+import { downloadDocx } from '../lib/backendClient'
 
 const MotionBox = motion(Box)
 
@@ -58,16 +69,20 @@ interface DashboardDoc {
   status: string
   risk: string
   score?: number
+  content?: string
 }
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate()
-  const { user } = useAuth()
+  const { user, profile } = useAuth()
+  const { isOpen, onOpen, onClose } = useDisclosure()
 
   const [searchQuery, setSearchQuery] = useState('')
   const [filterType, setFilterType] = useState('all')
   const [userDocs, setUserDocs] = useState<DashboardDoc[]>([])
   const [loading, setLoading] = useState(false)
+  const [selectedDoc, setSelectedDoc] = useState<DashboardDoc | null>(null)
+  const [loadingDoc, setLoadingDoc] = useState(false)
 
   useEffect(() => {
     loadDocs()
@@ -93,10 +108,29 @@ const Dashboard: React.FC = () => {
         setUserDocs([])
       }
     } catch (err) {
-      console.log('Error fetching user documents:', err)
+      logger.error('Error fetching user documents:', err)
       setUserDocs([])
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleViewDoc = async (doc: DashboardDoc) => {
+    setSelectedDoc(doc)
+    onOpen()
+    setLoadingDoc(true)
+    try {
+      const fullDoc = await fetchDocumentById(doc.id)
+      if (fullDoc) {
+        setSelectedDoc({
+          ...doc,
+          content: fullDoc.generated_content,
+        })
+      }
+    } catch (err) {
+      logger.error('Error fetching document detail:', err)
+    } finally {
+      setLoadingDoc(false)
     }
   }
 
@@ -109,7 +143,7 @@ const Dashboard: React.FC = () => {
     return matchesSearch && matchesType
   })
 
-  const tokensRemaining = user?.user_metadata?.tokens ?? 2
+  const tokensRemaining = profile?.tokens ?? user?.user_metadata?.tokens ?? 2
 
   return (
     <Box
@@ -358,7 +392,7 @@ const Dashboard: React.FC = () => {
                     _focus={{ borderColor: '#970fff' }}
                   />
                 </InputGroup>
-                <HStack spacing={1}>
+                <Flex wrap="wrap" gap={1}>
                   {['all', 'nda', 'contract', 'loan', 'employment'].map((t) => (
                     <Button
                       key={t}
@@ -374,7 +408,7 @@ const Dashboard: React.FC = () => {
                       {t}
                     </Button>
                   ))}
-                </HStack>
+                </Flex>
               </HStack>
             </Flex>
 
@@ -385,7 +419,7 @@ const Dashboard: React.FC = () => {
               backdropFilter="blur(25px)"
               border="1px solid rgba(255, 255, 255, 0.1)"
               boxShadow="0 20px 50px rgba(0, 0, 0, 0.5)"
-              overflow="hidden"
+              overflowX="auto"
             >
               {loading ? (
                 <VStack py={12}>
@@ -414,7 +448,7 @@ const Dashboard: React.FC = () => {
                   </Button>
                 </VStack>
               ) : (
-                <Table variant="simple" colorScheme="whiteAlpha">
+                <Table variant="simple" colorScheme="whiteAlpha" minW="600px">
                   <Thead bg="rgba(255, 255, 255, 0.04)">
                     <Tr>
                       <Th color="gray.400" py={4}>Document Name</Th>
@@ -474,6 +508,15 @@ const Dashboard: React.FC = () => {
                                 bg="transparent"
                                 color="white"
                                 _hover={{ bg: 'rgba(151, 15, 255, 0.2)' }}
+                                onClick={() => handleViewDoc(doc)}
+                              >
+                                View Document
+                              </MenuItem>
+                              <MenuItem
+                                icon={<FiPlus color="#00d4ff" />}
+                                bg="transparent"
+                                color="white"
+                                _hover={{ bg: 'rgba(0, 212, 255, 0.2)' }}
                                 onClick={() => navigate('/generate')}
                               >
                                 Open Generator
@@ -490,6 +533,67 @@ const Dashboard: React.FC = () => {
           </VStack>
         </VStack>
       </Container>
+
+      {/* Document Preview Modal */}
+      <Modal isOpen={isOpen} onClose={onClose} size="xl" scrollBehavior="inside">
+        <ModalOverlay backdropFilter="blur(10px)" bg="rgba(0, 0, 0, 0.8)" />
+        <ModalContent bg="#0d0f17" border="1px solid rgba(151, 15, 255, 0.4)" borderRadius="2xl" color="white">
+          <ModalHeader borderBottom="1px solid rgba(255, 255, 255, 0.1)">
+            <HStack spacing={3}>
+              <Box p={2} borderRadius="lg" bg="rgba(151, 15, 255, 0.2)">
+                <FiFileText color="#970fff" size={20} />
+              </Box>
+              <VStack align="start" spacing={0}>
+                <Text fontSize="md" fontWeight="700">{selectedDoc?.title}</Text>
+                <Text fontSize="xs" color="gray.400">{selectedDoc?.type} • {selectedDoc?.date}</Text>
+              </VStack>
+            </HStack>
+          </ModalHeader>
+          <ModalCloseButton />
+          <ModalBody py={6}>
+            {loadingDoc ? (
+              <VStack py={8}>
+                <Spinner color="#970fff" size="lg" />
+                <Text fontSize="sm" color="gray.400">Loading document content...</Text>
+              </VStack>
+            ) : (
+              <VStack align="stretch" spacing={4}>
+                <Box
+                  p={4}
+                  borderRadius="xl"
+                  bg="rgba(255, 255, 255, 0.03)"
+                  border="1px solid rgba(255, 255, 255, 0.08)"
+                  maxH="400px"
+                  overflowY="auto"
+                  fontSize="sm"
+                  fontFamily="mono"
+                  whiteSpace="pre-wrap"
+                  color="gray.200"
+                >
+                  {selectedDoc?.content || 'No document content available.'}
+                </Box>
+              </VStack>
+            )}
+          </ModalBody>
+          <ModalFooter borderTop="1px solid rgba(255, 255, 255, 0.1)">
+            <HStack spacing={3}>
+              {selectedDoc?.content && (
+                <Button
+                  size="sm"
+                  colorScheme="purple"
+                  leftIcon={<FiDownload />}
+                  onClick={() => downloadDocx(selectedDoc.content || '', selectedDoc.title)}
+                >
+                  Download DOCX
+                </Button>
+              )}
+              <Button size="sm" variant="ghost" color="gray.400" onClick={onClose}>
+                Close
+              </Button>
+            </HStack>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
 
       {/* Integrated Hover Footer Component */}
       <Box px={{ base: 4, md: 8 }} pb={8} position="relative" zIndex={10}>

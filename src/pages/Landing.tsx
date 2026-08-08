@@ -24,6 +24,7 @@ import { useNavigate } from 'react-router-dom'
 import CyberMatrixHero from '../components/ui/cyber-matrix-hero'
 import HoverFooter from '../components/ui/hover-footer'
 import FloatingNavigation from '../components/FloatingNavigation'
+import Chatbot from '../components/Chatbot'
 
 const MotionBox = motion(Box)
 
@@ -177,7 +178,7 @@ const Landing: React.FC = () => {
                 fontSize="xs"
                 fontWeight="700"
               >
-                RAG VECTOR KNOWLEDGE BASE
+                STATUTORY CLAUSE KNOWLEDGE BASE
               </Badge>
               <Heading fontSize={{ base: '3xl', md: '4xl' }} fontWeight="800" color="white">
                 Beyond Standard Boilerplate — Legal Engineering Grounded in Law
@@ -229,28 +230,28 @@ const Landing: React.FC = () => {
 
             {/* Stat Showcase Box */}
             <Box
-              p={8}
+              p={{ base: 5, md: 8 }}
               borderRadius="3xl"
               bg="linear-gradient(135deg, rgba(13, 15, 23, 0.95), rgba(26, 10, 46, 0.8))"
               border="1px solid rgba(151, 15, 255, 0.3)"
               boxShadow="0 25px 60px rgba(0, 0, 0, 0.6)"
             >
-              <SimpleGrid columns={2} spacing={8}>
+              <SimpleGrid columns={{ base: 1, sm: 2 }} spacing={{ base: 6, md: 8 }}>
                 <VStack align="start" spacing={1}>
-                  <Text fontSize="4xl" fontWeight="900" color="#970fff">98.6%</Text>
-                  <Text fontSize="xs" color="gray.400" textTransform="uppercase" fontWeight="700">Compliance Rate</Text>
+                  <Text fontSize={{ base: '2xl', sm: '3xl', md: '4xl' }} fontWeight="900" color="#970fff">Verified</Text>
+                  <Text fontSize="xs" color="gray.400" textTransform="uppercase" fontWeight="700">Statutory Risk Analysis</Text>
                 </VStack>
                 <VStack align="start" spacing={1}>
-                  <Text fontSize="4xl" fontWeight="900" color="#00f2fe">25+</Text>
+                  <Text fontSize={{ base: '2xl', sm: '3xl', md: '4xl' }} fontWeight="900" color="#00f2fe">25+</Text>
                   <Text fontSize="xs" color="gray.400" textTransform="uppercase" fontWeight="700">Vetted Statutory Clauses</Text>
                 </VStack>
                 <VStack align="start" spacing={1}>
-                  <Text fontSize="4xl" fontWeight="900" color="#10b981">100%</Text>
+                  <Text fontSize={{ base: '2xl', sm: '3xl', md: '4xl' }} fontWeight="900" color="#10b981">100%</Text>
                   <Text fontSize="xs" color="gray.400" textTransform="uppercase" fontWeight="700">Server Key Isolation</Text>
                 </VStack>
                 <VStack align="start" spacing={1}>
-                  <Text fontSize="4xl" fontWeight="900" color="#f59e0b">Daily</Text>
-                  <Text fontSize="xs" color="gray.400" textTransform="uppercase" fontWeight="700">Government Law Sync</Text>
+                  <Text fontSize={{ base: '2xl', sm: '3xl', md: '4xl' }} fontWeight="900" color="#f59e0b">Statutory</Text>
+                  <Text fontSize="xs" color="gray.400" textTransform="uppercase" fontWeight="700">Legal Knowledge Base</Text>
                 </VStack>
               </SimpleGrid>
             </Box>
@@ -265,6 +266,9 @@ const Landing: React.FC = () => {
           <HoverFooter />
         </Container>
       </Box>
+
+      {/* Live AI Chatbot Widget */}
+      <Chatbot />
     </Box>
   )
 }

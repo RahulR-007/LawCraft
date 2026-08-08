@@ -18,8 +18,7 @@ export const logger = {
         }
     },
     error: (message: string, ...args: any[]) => {
-        if (import.meta.env.DEV) {
-            console.error('[LawCraft Error]', message, ...args)
-        }
+        // Errors must be logged in all environments for production diagnostic visibility
+        console.error('[LawCraft Error]', message, ...args)
     },
 }

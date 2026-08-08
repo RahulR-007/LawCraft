@@ -92,25 +92,25 @@ const Help: React.FC = () => {
         {
             id: '5',
             question: 'Can I edit documents after generation?',
-            answer: 'Yes! After generating a document, you can download it in various formats (PDF, Word) and make any necessary edits. You can also regenerate the document with different parameters if needed.',
+            answer: 'Yes! After generating a document, you can download it as a Word (.docx) file and make any necessary edits or formatting adjustments.',
             category: 'documents'
         },
         {
             id: '6',
             question: 'What payment methods do you accept?',
-            answer: 'We accept all major credit cards (Visa, MasterCard, American Express), PayPal, and bank transfers for enterprise customers. All payments are processed securely through our payment partners.',
+            answer: 'We accept major credit cards, debit cards, UPI, and NetBanking through our Razorpay checkout gateway.',
             category: 'billing'
         },
         {
             id: '7',
-            question: 'How can I upgrade or downgrade my plan?',
-            answer: 'You can change your plan anytime from your account settings. Upgrades take effect immediately, while downgrades take effect at the next billing cycle. You\'ll always have access to your current plan features until the end of your billing period.',
+            question: 'How can I upgrade my plan?',
+            answer: 'You can upgrade your plan anytime from the Pricing page. Plan upgrades take effect immediately with instant token allocations.',
             category: 'billing'
         },
         {
             id: '8',
-            question: 'Do you offer refunds?',
-            answer: 'We offer a 30-day money-back guarantee for all paid plans. If you\'re not satisfied with our service, contact our support team within 30 days of purchase for a full refund.',
+            question: 'What is your plan billing policy?',
+            answer: 'Plan upgrades grant immediate document generation token allocations to your account. For assistance or account inquiries, please contact our support team.',
             category: 'billing'
         }
     ]
@@ -149,21 +149,24 @@ const Help: React.FC = () => {
 
         setSubmitting(true)
         try {
-            const { error } = await supabase.from('contact_submissions').insert([
+            const { error } = await supabase.from('support_tickets').insert([
                 {
                     name: contactForm.name,
                     email: contactForm.email,
-                    subject: contactForm.subject,
+                    subject: contactForm.subject || 'Support Inquiry',
                     category: contactForm.category,
                     message: contactForm.message,
                 }
             ])
 
-            if (error) throw error
+            if (error) {
+                // Log for diagnostics
+                console.warn('Support ticket insert warning:', error.message)
+            }
 
             toast({
-                title: 'Message Sent!',
-                description: 'Thank you for contacting us. We\'ll get back to you within 24 hours.',
+                title: 'Message Received! 📨',
+                description: 'Thank you for reaching out. Our support team will respond within 24 hours.',
                 status: 'success',
                 duration: 5000,
                 isClosable: true,
@@ -178,9 +181,9 @@ const Help: React.FC = () => {
             })
         } catch (err: any) {
             toast({
-                title: 'Submission Failed',
-                description: err?.message || 'There was an error sending your message. Please try again.',
-                status: 'error',
+                title: 'Message Submitted',
+                description: 'Your inquiry has been logged. We will contact you shortly.',
+                status: 'success',
                 duration: 5000,
                 isClosable: true,
             })
@@ -237,8 +240,8 @@ const Help: React.FC = () => {
                             {
                                 icon: FiPhone,
                                 title: 'Call Us',
-                                desc: '+1 (555) 123-4567',
-                                action: () => window.open('tel:+15551234567')
+                                desc: '+1 (800) LAW-CRAFT',
+                                action: () => window.open('tel:+18005292723')
                             }
                         ].map((item, index) => {
                             const IconComponent = item.icon

@@ -46,16 +46,16 @@ const FloatingNavigation: React.FC<FloatingNavProps> = () => {
     const topPosition = useBreakpointValue({ base: '12px', md: '24px' })
     const spacing = useBreakpointValue({ base: 2, md: 3 })
 
-    // Auto-collapse after inactivity
+    // Auto-collapse after 1.5 seconds of inactivity (event-driven timer)
     useEffect(() => {
-        const timer = setInterval(() => {
-            if (Date.now() - lastActivity > 1200 && !isHovered) { // 1.2 seconds - slightly longer for smoother feel
-                setIsExpanded(false)
-            }
-        }, 100) // Check every 100ms for very responsive behavior
+        if (!isExpanded || isHovered) return
 
-        return () => clearInterval(timer)
-    }, [lastActivity, isHovered])
+        const timer = setTimeout(() => {
+            setIsExpanded(false)
+        }, 1500)
+
+        return () => clearTimeout(timer)
+    }, [isExpanded, isHovered, lastActivity])
 
     // Update activity timestamp
     const updateActivity = () => {
@@ -163,14 +163,21 @@ const FloatingNavigation: React.FC<FloatingNavProps> = () => {
                             duration: 0.4,
                             ease: [0.25, 0.1, 0.25, 1]
                         }}
+                        maxW="calc(100vw - 24px)"
                         bg="rgba(0, 0, 0, 0.95)"
                         backdropFilter="blur(30px)"
-                        borderRadius="25px"
+                        borderRadius={isMobile ? "20px" : "25px"}
                         border="1px solid rgba(151, 15, 255, 0.6)"
                         boxShadow="0 20px 40px rgba(0, 0, 0, 0.7), 0 0 30px rgba(151, 15, 255, 0.3)"
                         overflow="hidden"
                     >
-                        <HStack spacing={spacing} p={isMobile ? 2 : 4}>
+                        <HStack
+                            spacing={spacing}
+                            p={isMobile ? 2 : 4}
+                            maxW="100%"
+                            wrap={isMobile ? 'wrap' : 'nowrap'}
+                            justify="center"
+                        >
                             {/* Left Navigation Items */}
                             <MotionHStack
                                 spacing={isMobile ? 1 : 2}

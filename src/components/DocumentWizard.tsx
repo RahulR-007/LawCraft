@@ -118,16 +118,35 @@ export const DocumentWizard: React.FC<DocumentWizardProps> = ({ onDocumentGenera
     // Pre-populate from location.state if navigated from Law Updates
     useEffect(() => {
         const state = location.state as any
-        if (state?.lawCategory) {
+        if (!state) return
+
+        if (state.lawCategory) {
             const cat = state.lawCategory.toLowerCase()
             const matched = DOCUMENT_TYPES.find(d => d.id === cat || d.id.includes(cat) || cat.includes(d.id))
             if (matched) {
                 setDocumentType(matched.id)
+            } else if (cat.includes('data') || cat.includes('evidence') || cat.includes('protection')) {
+                setDocumentType('nda')
+            } else if (cat.includes('employment') || cat.includes('wage') || cat.includes('labor')) {
+                setDocumentType('employment')
+            } else if (cat.includes('financial') || cat.includes('lending')) {
+                setDocumentType('loan')
+            } else if (cat.includes('estate') || cat.includes('lease')) {
+                setDocumentType('lease')
+            } else {
+                setDocumentType('contract')
             }
         }
-        if (state?.lawTitle || state?.summary) {
-            const contextMsg = `Compliance Focus: ${state.lawTitle || 'Statute Update'}\nNotes: ${state.summary || ''}`
+        if (state.lawTitle || state.summary) {
+            const contextMsg = `Compliance Focus: ${state.lawTitle || 'Statute Update'}\nStatute Details: ${state.summary || ''}`
             setCustomDetails(contextMsg)
+            toast({
+                title: 'Statute Context Loaded 📜',
+                description: `Pre-filled requirements based on: ${state.lawTitle || 'selected law update'}.`,
+                status: 'info',
+                duration: 5000,
+                isClosable: true,
+            })
         }
     }, [location])
 
@@ -501,7 +520,7 @@ export const DocumentWizard: React.FC<DocumentWizardProps> = ({ onDocumentGenera
                 p={4}
             >
                 <VStack spacing={3}>
-                    <Flex w="full" justify="space-between" align="center" px={4}>
+                    <Flex w="full" justify="space-between" align="center" px={{ base: 2, md: 4 }}>
                         {[
                             { n: 1, title: 'Document & Jurisdiction' },
                             { n: 2, title: 'Party Details' },
@@ -534,6 +553,14 @@ export const DocumentWizard: React.FC<DocumentWizardProps> = ({ onDocumentGenera
                             </HStack>
                         ))}
                     </Flex>
+                    <Text display={{ base: 'block', md: 'none' }} fontSize="xs" fontWeight="bold" color="#970fff" textAlign="center">
+                        Step {step} of 4: {[
+                            'Document & Jurisdiction',
+                            'Party Details',
+                            'Legal Clauses',
+                            'Review & Generate'
+                        ][step - 1]}
+                    </Text>
                     <Progress
                         value={(step / 4) * 100}
                         size="xs"

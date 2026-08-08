@@ -178,7 +178,7 @@ const AuthPage: React.FC = () => {
         >
           {/* Header */}
           <VStack spacing={6} textAlign="center" mb={8}>
-            <Heading fontSize="4xl" color="white" fontWeight="900">
+            <Heading fontSize={{ base: '2xl', sm: '4xl' }} color="white" fontWeight="900">
               Welcome to <Text as="span" color="brand.500">LawCraft</Text>
             </Heading>
             <Text fontSize="lg" color="gray.400">
@@ -196,7 +196,7 @@ const AuthPage: React.FC = () => {
             bg="rgba(255, 255, 255, 0.05)"
             backdropFilter="blur(10px)"
             borderRadius="lg"
-            p={8}
+            p={{ base: 4, sm: 8 }}
             border="1px solid"
             borderColor="rgba(255, 255, 255, 0.1)"
             boxShadow="0 0 20px rgba(151, 15, 255, 0.3)"

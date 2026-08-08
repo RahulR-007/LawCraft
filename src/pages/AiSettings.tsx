@@ -179,7 +179,7 @@ const AiSettingsPage: React.FC = () => {
                             >
                                 <Text fontSize="sm" color={colorMode === 'dark' ? 'gray.300' : 'gray.600'}>
                                     <strong>How it works:</strong> LawCraft uses Supabase Edge Functions as a secure proxy.
-                                    Your requests are authenticated with your JWT, rate-limited (10 req/min), and token-quota
+                                    Your requests are authenticated with your JWT, rate-limited (5 req/min for documents, 20 req/min for chat), and token-quota
                                     checked before being forwarded to the AI model. The API key never leaves the server.
                                 </Text>
                             </Box>
@@ -192,7 +192,7 @@ const AiSettingsPage: React.FC = () => {
                                 {[
                                     { label: 'JWT Authentication Required', status: true },
                                     { label: 'Server-Side API Key Storage', status: true },
-                                    { label: 'Per-User Rate Limiting (10 req/min)', status: true },
+                                    { label: 'Per-User Rate Limiting (5 req/min Docs / 20 req/min Chat)', status: true },
                                     { label: 'Token Quota Enforcement', status: true },
                                     { label: 'Request Validation & Sanitization', status: true },
                                     { label: 'Legal Topic Enforcement (Chatbot)', status: true },

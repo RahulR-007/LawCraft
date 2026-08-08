@@ -492,10 +492,12 @@ How may I assist you with your legal documents today?`
                 {isOpen && (
                     <MotionBox
                         position="fixed"
-                        bottom="20px"
-                        right="20px"
-                        width={isMinimized ? "80px" : "400px"}
-                        height={isMinimized ? "80px" : "600px"}
+                        bottom={{ base: "12px", md: "20px" }}
+                        right={{ base: "12px", md: "20px" }}
+                        width={isMinimized ? "70px" : "calc(100vw - 24px)"}
+                        maxW={isMinimized ? "70px" : "400px"}
+                        height={isMinimized ? "70px" : "calc(100vh - 100px)"}
+                        maxH={isMinimized ? "70px" : "600px"}
                         bg="rgba(0, 0, 0, 0.85)"
                         backdropFilter="blur(20px)"
                         borderRadius="xl"

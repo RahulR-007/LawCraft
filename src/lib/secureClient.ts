@@ -348,6 +348,34 @@ export async function fetchTokenBalance(): Promise<TokenInfo> {
     }
 }
 
+export interface PaymentVerificationInput {
+    planId: string
+    razorpayPaymentId: string
+    razorpayOrderId?: string
+    razorpaySignature?: string
+}
+
+export interface PaymentVerificationResult {
+    success: boolean
+    message: string
+    planName: string
+    tokens: number
+    paymentId: string
+}
+
+/**
+ * Verifies Razorpay payment server-side via Edge Function and updates user token balance.
+ */
+export async function verifyPayment(
+    input: PaymentVerificationInput
+): Promise<PaymentVerificationResult> {
+    return invokeWithRetry<PaymentVerificationResult>(
+        'verify-payment',
+        input as unknown as Record<string, unknown>,
+        { maxRetries: 1, timeoutMs: 30_000 }
+    )
+}
+
 import { logger } from './logger'
 
 /**
@@ -377,3 +405,4 @@ export const secureStorage = {
         } catch {}
     }
 }
+

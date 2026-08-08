@@ -23,13 +23,26 @@ interface User {
   }
 }
 
+export interface UserProfile {
+  id: string
+  email: string
+  fullname: string
+  plan_name: string
+  tokens: number
+  preferred_jurisdiction?: string
+  documents_generated?: number
+  updated_at?: string
+}
+
 interface AuthContextType {
   user: User | null
+  profile: UserProfile | null
   signIn: (email: string, password: string) => Promise<{ error?: any }>
   signUp: (email: string, password: string, fullname: string) => Promise<{ error?: any }>
   signInWithGoogle: () => Promise<{ error?: any }>
   signOut: () => Promise<{ error?: any }>
   updateUser: (userData: any) => Promise<void>
+  refreshProfile: () => Promise<UserProfile | null>
   loading: boolean
 }
 
@@ -45,19 +58,78 @@ export const useAuth = () => {
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null)
+  const [profile, setProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
+
+  const fetchProfile = async (userId: string): Promise<UserProfile | null> => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single()
+
+      if (error || !data) {
+        return null
+      }
+      return data as UserProfile
+    } catch {
+      return null
+    }
+  }
+
+  const syncUserWithProfile = (rawUser: User | null, userProf: UserProfile | null): User | null => {
+    if (!rawUser) return null
+    if (!userProf) return rawUser
+
+    return {
+      ...rawUser,
+      user_metadata: {
+        ...rawUser.user_metadata,
+        tokens: userProf.tokens,
+        plan_name: userProf.plan_name,
+        fullname: userProf.fullname || rawUser.user_metadata?.fullname,
+      }
+    }
+  }
+
+  const refreshProfile = async (): Promise<UserProfile | null> => {
+    if (!user) return null
+    const prof = await fetchProfile(user.id)
+    if (prof) {
+      setProfile(prof)
+      setUser(prev => syncUserWithProfile(prev, prof))
+    }
+    return prof
+  }
 
   useEffect(() => {
     // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }: { data: { session: Session | null } }) => {
-      setUser(session?.user as User || null)
+    supabase.auth.getSession().then(async ({ data: { session } }: { data: { session: Session | null } }) => {
+      const initialUser = session?.user as User || null
+      if (initialUser) {
+        const prof = await fetchProfile(initialUser.id)
+        setProfile(prof)
+        setUser(syncUserWithProfile(initialUser, prof))
+      } else {
+        setUser(null)
+        setProfile(null)
+      }
       setLoading(false)
     })
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event: AuthChangeEvent, session: Session | null) => {
-        setUser(session?.user as User || null)
+        const currentUser = session?.user as User || null
+        if (currentUser) {
+          const prof = await fetchProfile(currentUser.id)
+          setProfile(prof)
+          setUser(syncUserWithProfile(currentUser, prof))
+        } else {
+          setUser(null)
+          setProfile(null)
+        }
         setLoading(false)
       }
     )
@@ -107,6 +179,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const signOut = async () => {
     const { error } = await supabase.auth.signOut()
+    setProfile(null)
+    setUser(null)
     return { error }
   }
 
@@ -119,20 +193,24 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     })
     if (error) throw error
 
-    // Refresh the session to get updated user data
+    // Refresh the session & profile to get updated user data
     const { data: { session } } = await supabase.auth.getSession()
     if (session?.user) {
-      setUser(session.user as User)
+      const prof = await fetchProfile(session.user.id)
+      setProfile(prof)
+      setUser(syncUserWithProfile(session.user as User, prof))
     }
   }
 
   const value = {
     user,
+    profile,
     signIn,
     signUp,
     signInWithGoogle,
     signOut,
     updateUser,
+    refreshProfile,
     loading
   }
 
@@ -142,3 +220,4 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     </AuthContext.Provider>
   )
 }
+

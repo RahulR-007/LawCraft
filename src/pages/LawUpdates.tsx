@@ -203,7 +203,7 @@ const LawUpdates: React.FC = () => {
                                         color={colorMode === 'dark' ? 'gray.400' : 'gray.600'}
                                         fontSize="sm"
                                     >
-                                        Auto-synced from government gazette sources • Updated daily
+                                        Verified Statutory Legal Knowledge Base • Real-time legal citations
                                     </Text>
                                 </VStack>
                             </HStack>
@@ -220,7 +220,7 @@ const LawUpdates: React.FC = () => {
                         backdropFilter="blur(20px)"
                         border={`1px solid ${colorMode === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'}`}
                     >
-                        <InputGroup flex={2}>
+                        <InputGroup flex={2} w="full">
                             <InputLeftElement pointerEvents="none">
                                 <FiSearch color="gray" />
                             </InputLeftElement>
@@ -238,11 +238,12 @@ const LawUpdates: React.FC = () => {
                             borderRadius="xl"
                             size="sm"
                             flex={1}
+                            w="full"
                         >
-                            <option value="IN">India</option>
-                            <option value="US">United States</option>
-                            <option value="UK">United Kingdom</option>
-                            <option value="EU">European Union</option>
+                            <option value="IN" style={{ background: '#0d0f17', color: 'white' }}>India</option>
+                            <option value="US" style={{ background: '#0d0f17', color: 'white' }}>United States</option>
+                            <option value="UK" style={{ background: '#0d0f17', color: 'white' }}>United Kingdom</option>
+                            <option value="EU" style={{ background: '#0d0f17', color: 'white' }}>European Union</option>
                         </Select>
                         <Select
                             value={filterCategory}
@@ -250,10 +251,11 @@ const LawUpdates: React.FC = () => {
                             borderRadius="xl"
                             size="sm"
                             flex={1}
+                            w="full"
                         >
-                            <option value="all">All Categories</option>
+                            <option value="all" style={{ background: '#0d0f17', color: 'white' }}>All Categories</option>
                             {categories.map((cat) => (
-                                <option key={cat} value={cat}>
+                                <option key={cat} value={cat} style={{ background: '#0d0f17', color: 'white' }}>
                                     {cat.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase())}
                                 </option>
                             ))}
