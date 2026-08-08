@@ -18,6 +18,7 @@ import {
   FiFileText,
   FiUsers,
   FiZap,
+  FiBookOpen,
   FiCheckCircle,
 } from 'react-icons/fi'
 import { useNavigate } from 'react-router-dom'
@@ -33,6 +34,7 @@ const Landing: React.FC = () => {
 
   const documents = [
     {
+      id: 'nda',
       title: 'Non-Disclosure Agreement',
       category: 'IP & Confidentiality',
       description: 'Comprehensive NDA templates tailored to protect proprietary trade secrets and technical IP.',
@@ -40,6 +42,7 @@ const Landing: React.FC = () => {
       color: '#970fff',
     },
     {
+      id: 'contract',
       title: 'Master Services Agreement',
       category: 'Commercial Contracts',
       description: 'B2B service agreements with customizable scope, payment milestones, and SLA guarantees.',
@@ -47,6 +50,7 @@ const Landing: React.FC = () => {
       color: '#00f2fe',
     },
     {
+      id: 'employment',
       title: 'Employment Contract',
       category: 'HR & Labor Compliance',
       description: 'Fully compliant employment contracts covering CTC structures, leave policy, and non-compete clauses.',
@@ -54,11 +58,20 @@ const Landing: React.FC = () => {
       color: '#2ed573',
     },
     {
+      id: 'loan',
       title: 'Loan & Promissory Note',
       category: 'Financial Agreements',
       description: 'Enforceable loan instruments detailing interest rates, repayment tenure, and default remedies.',
       icon: FiZap,
       color: '#f59e0b',
+    },
+    {
+      id: 'lease',
+      title: 'Lease & Rental Agreement',
+      category: 'Real Estate & Property',
+      description: 'Residential and commercial rental agreements covering security deposits, terms, and obligations.',
+      icon: FiBookOpen,
+      color: '#ec4899',
     },
   ]
 
@@ -147,12 +160,12 @@ const Landing: React.FC = () => {
                     variant="ghost"
                     color={doc.color}
                     rightIcon={<FiArrowRight />}
-                    onClick={() => navigate('/generate')}
+                    onClick={() => navigate(`/generate?template=${doc.id}`, { state: { template: doc.id } })}
                     _hover={{ bg: `${doc.color}15` }}
                     p={0}
                     justifyContent="start"
                   >
-                    Generate Document
+                    Use Template
                   </Button>
                 </MotionBox>
               ))}

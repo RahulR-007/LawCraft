@@ -18,6 +18,9 @@ interface User {
     company?: string
     position?: string
     location?: string
+    country?: string
+    state?: string
+    address?: string
     bio?: string
     settings?: any
   }

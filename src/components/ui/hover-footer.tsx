@@ -166,10 +166,10 @@ export const HoverFooter = () => {
     {
       title: "Legal Solutions",
       links: [
-        { label: "Contract Generator", href: "/generate" },
-        { label: "NDA Builder", href: "/generate" },
-        { label: "Employment Agreements", href: "/generate" },
-        { label: "Loan Notes", href: "/generate" },
+        { label: "Contract Generator", href: "/generate?template=contract" },
+        { label: "NDA Builder", href: "/generate?template=nda" },
+        { label: "Employment Agreements", href: "/generate?template=employment" },
+        { label: "Loan Notes", href: "/generate?template=loan" },
       ],
     },
     {

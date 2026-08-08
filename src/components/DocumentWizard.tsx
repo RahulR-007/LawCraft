@@ -48,6 +48,7 @@ import {
     type DocumentFormInput,
     type PartyInput,
 } from '../lib/documentValidator'
+import { useAuth } from '../contexts/AuthContext'
 import {
     backendGenerateStructuredDocument,
     backendExportDocx,
@@ -79,6 +80,7 @@ const JURISDICTIONS = [
 export const DocumentWizard: React.FC<DocumentWizardProps> = ({ onDocumentGenerated }) => {
     const { colorMode } = useColorMode()
     const toast = useToast()
+    const { user } = useAuth()
 
     // Wizard state
     const [step, setStep] = useState(1)
@@ -115,47 +117,108 @@ export const DocumentWizard: React.FC<DocumentWizardProps> = ({ onDocumentGenera
 
     const location = useLocation()
 
-    // Pre-populate from location.state if navigated from Law Updates
-    useEffect(() => {
-        const state = location.state as any
-        if (!state) return
+    // Helper functions for user profile location autofill (safe formatting with 0 null/undefined strings)
+    const getProfileAddress = () => {
+        if (!user?.user_metadata) return ''
+        const { address, state, country, location: loc } = user.user_metadata
+        const parts = [address, state, country].filter((p): p is string => Boolean(p && typeof p === 'string' && p.trim()))
+        if (parts.length > 0) return parts.join(', ')
+        return loc && typeof loc === 'string' ? loc.trim() : ''
+    }
 
-        if (state.lawCategory) {
-            const cat = state.lawCategory.toLowerCase()
-            const matched = DOCUMENT_TYPES.find(d => d.id === cat || d.id.includes(cat) || cat.includes(d.id))
+    const getProfileName = () => {
+        if (!user?.user_metadata) return ''
+        const { company, fullname, full_name, name } = user.user_metadata
+        const raw = company || fullname || full_name || name || ''
+        return typeof raw === 'string' ? raw.trim() : ''
+    }
+
+    // Pre-populate template from URL query params (?template=id or ?type=id) or location.state
+    useEffect(() => {
+        const searchParams = new URLSearchParams(location.search)
+        const paramTemplate = searchParams.get('template') || searchParams.get('type')
+        const state = location.state as any
+        const stateTemplate = state?.template || state?.documentType
+
+        const rawTemplate = (paramTemplate || stateTemplate || '').toLowerCase().trim()
+
+        if (rawTemplate) {
+            const matched = DOCUMENT_TYPES.find(d =>
+                d.id === rawTemplate ||
+                d.id.includes(rawTemplate) ||
+                rawTemplate.includes(d.id)
+            )
+
             if (matched) {
                 setDocumentType(matched.id)
-            } else if (cat.includes('data') || cat.includes('evidence') || cat.includes('protection')) {
-                setDocumentType('nda')
-            } else if (cat.includes('employment') || cat.includes('wage') || cat.includes('labor')) {
-                setDocumentType('employment')
-            } else if (cat.includes('financial') || cat.includes('lending')) {
-                setDocumentType('loan')
-            } else if (cat.includes('estate') || cat.includes('lease')) {
-                setDocumentType('lease')
-            } else {
-                setDocumentType('contract')
+                toast({
+                    title: `${matched.label} Template Loaded 📜`,
+                    description: `Preselected ${matched.label} and loaded corresponding fields.`,
+                    status: 'success',
+                    duration: 4000,
+                    isClosable: true,
+                })
             }
         }
-        if (state.lawTitle || state.summary) {
-            const contextMsg = `Compliance Focus: ${state.lawTitle || 'Statute Update'}\nStatute Details: ${state.summary || ''}`
-            setCustomDetails(contextMsg)
-            toast({
-                title: 'Statute Context Loaded 📜',
-                description: `Pre-filled requirements based on: ${state.lawTitle || 'selected law update'}.`,
-                status: 'info',
-                duration: 5000,
-                isClosable: true,
-            })
-        }
-    }, [location])
 
-    // Update parties whenever documentType changes
+        // Handle law updates context
+        if (state) {
+            if (state.lawCategory) {
+                const cat = state.lawCategory.toLowerCase()
+                const matched = DOCUMENT_TYPES.find(d => d.id === cat || d.id.includes(cat) || cat.includes(d.id))
+                if (matched) {
+                    setDocumentType(matched.id)
+                } else if (cat.includes('data') || cat.includes('evidence') || cat.includes('protection')) {
+                    setDocumentType('nda')
+                } else if (cat.includes('employment') || cat.includes('wage') || cat.includes('labor')) {
+                    setDocumentType('employment')
+                } else if (cat.includes('financial') || cat.includes('lending')) {
+                    setDocumentType('loan')
+                } else if (cat.includes('estate') || cat.includes('lease')) {
+                    setDocumentType('lease')
+                }
+            }
+            if (state.lawTitle || state.summary) {
+                const contextMsg = `Compliance Focus: ${state.lawTitle || 'Statute Update'}\nStatute Details: ${state.summary || ''}`
+                setCustomDetails(contextMsg)
+            }
+        }
+    }, [location.search, location.state])
+
+    // Update parties & autofill user profile defaults whenever documentType or user profile updates
     useEffect(() => {
         const labels = getPartyLabels(documentType)
         const keys = Object.keys(labels)
-        setParties(keys.map(role => ({ role, name: '', address: '', designation: '' })))
-    }, [documentType])
+        const defaultName = getProfileName()
+        const defaultAddress = getProfileAddress()
+
+        setParties(keys.map((role, idx) => ({
+            role,
+            name: idx === 0 ? defaultName : '',
+            address: idx === 0 ? defaultAddress : '',
+            designation: ''
+        })))
+    }, [documentType, user])
+
+    // Pre-select jurisdiction & jurisdictionState from user profile if available
+    useEffect(() => {
+        if (!user?.user_metadata) return
+        const { country, state } = user.user_metadata
+
+        if (country) {
+            if (country.includes('India') || country === 'IN') setJurisdiction('IN')
+            else if (country.includes('United States') || country === 'US') setJurisdiction('US')
+            else if (country.includes('United Kingdom') || country === 'UK') setJurisdiction('UK')
+            else if (country.includes('European') || country === 'EU') setJurisdiction('EU')
+        }
+
+        if (state && typeof state === 'string') {
+            const validStates = JURISDICTION_STATES[jurisdiction] || JURISDICTION_STATES['IN']
+            if (validStates.includes(state)) {
+                setJurisdictionState(state)
+            }
+        }
+    }, [user, jurisdiction])
 
     // Load legal clauses when entering Step 3
     useEffect(() => {

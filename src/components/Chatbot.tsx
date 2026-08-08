@@ -204,6 +204,139 @@ const FormattedChatMessage: React.FC<{ text: string; onNavigateToGenerate?: () =
     )
 }
 
+// Curated Pool of 60+ Legally Accurate Knowledge Queries
+interface SuggestionQuery {
+    id: string
+    text: string
+    category: string
+}
+
+const LEGAL_QUERY_POOL: SuggestionQuery[] = [
+    // 1. Definitions
+    { id: 'def_1', text: 'What is indemnity?', category: 'definitions' },
+    { id: 'def_2', text: 'What is force majeure?', category: 'definitions' },
+    { id: 'def_3', text: 'What is consideration in a contract?', category: 'definitions' },
+    { id: 'def_4', text: 'What is a warranty?', category: 'definitions' },
+    { id: 'def_5', text: 'What is a representation?', category: 'definitions' },
+    { id: 'def_6', text: 'What is jurisdiction?', category: 'definitions' },
+    { id: 'def_7', text: 'What is liquidated damages?', category: 'definitions' },
+    { id: 'def_8', text: 'What is a severability clause?', category: 'definitions' },
+    { id: 'def_9', text: 'What is governing law?', category: 'definitions' },
+    { id: 'def_10', text: 'What is due diligence?', category: 'definitions' },
+
+    // 2. Explanations
+    { id: 'exp_1', text: 'Explain indemnity in simple terms', category: 'explanations' },
+    { id: 'exp_2', text: 'Explain force majeure clauses', category: 'explanations' },
+    { id: 'exp_3', text: 'Explain limitation of liability', category: 'explanations' },
+    { id: 'exp_4', text: 'Explain arbitration clauses', category: 'explanations' },
+    { id: 'exp_5', text: 'Explain confidentiality clauses', category: 'explanations' },
+    { id: 'exp_6', text: 'Explain liquidated damages', category: 'explanations' },
+    { id: 'exp_7', text: 'Explain termination for cause', category: 'explanations' },
+    { id: 'exp_8', text: 'Explain restraint of trade clauses', category: 'explanations' },
+
+    // 3. Comparisons
+    { id: 'cmp_1', text: 'Indemnity vs guarantee', category: 'comparisons' },
+    { id: 'cmp_2', text: 'Arbitration vs litigation', category: 'comparisons' },
+    { id: 'cmp_3', text: 'Warranty vs representation', category: 'comparisons' },
+    { id: 'cmp_4', text: 'Employee vs contractor', category: 'comparisons' },
+    { id: 'cmp_5', text: 'Lease vs license', category: 'comparisons' },
+    { id: 'cmp_6', text: 'Damages vs penalty', category: 'comparisons' },
+    { id: 'cmp_7', text: 'Void vs voidable contract', category: 'comparisons' },
+    { id: 'cmp_8', text: 'Confidentiality vs non-disclosure', category: 'comparisons' },
+
+    // 4. Practical Contract Checks
+    { id: 'chk_1', text: 'What should I check before signing a contract?', category: 'practical_checks' },
+    { id: 'chk_2', text: 'What to check in a confidentiality clause?', category: 'practical_checks' },
+    { id: 'chk_3', text: 'What to check in an employment contract?', category: 'practical_checks' },
+    { id: 'chk_4', text: 'What to check before signing a lease?', category: 'practical_checks' },
+    { id: 'chk_5', text: 'What are common contract red flags?', category: 'practical_checks' },
+    { id: 'chk_6', text: 'What to check in a service agreement?', category: 'practical_checks' },
+    { id: 'chk_7', text: 'What to look for in a liability clause?', category: 'practical_checks' },
+    { id: 'chk_8', text: 'What should I check in a loan agreement?', category: 'practical_checks' },
+
+    // 5. Contract Law
+    { id: 'cnt_1', text: 'What is a non-disclosure agreement?', category: 'contract_law' },
+    { id: 'cnt_2', text: 'What is a master services agreement?', category: 'contract_law' },
+    { id: 'cnt_3', text: 'What makes a contract legally binding?', category: 'contract_law' },
+    { id: 'cnt_4', text: 'What is breach of contract?', category: 'contract_law' },
+    { id: 'cnt_5', text: 'What is an assignment clause?', category: 'contract_law' },
+    { id: 'cnt_6', text: 'What is an entire agreement clause?', category: 'contract_law' },
+
+    // 6. Employment Law
+    { id: 'emp_1', text: 'What is an employment contract?', category: 'employment_law' },
+    { id: 'emp_2', text: 'What is a notice period clause?', category: 'employment_law' },
+    { id: 'emp_3', text: 'What is a non-compete clause?', category: 'employment_law' },
+    { id: 'emp_4', text: 'What is workplace confidentiality?', category: 'employment_law' },
+    { id: 'emp_5', text: 'What is employment at-will?', category: 'employment_law' },
+    { id: 'emp_6', text: 'What is probation in employment?', category: 'employment_law' },
+    { id: 'emp_7', text: 'What is severance pay?', category: 'employment_law' },
+
+    // 7. Loans & Finance
+    { id: 'fin_1', text: 'What is a loan agreement?', category: 'loans_finance' },
+    { id: 'fin_2', text: 'What is an interest rate clause?', category: 'loans_finance' },
+    { id: 'fin_3', text: 'What is a loan default clause?', category: 'loans_finance' },
+    { id: 'fin_4', text: 'What is collateral in a loan?', category: 'loans_finance' },
+    { id: 'fin_5', text: 'What is a promissory note?', category: 'loans_finance' },
+    { id: 'fin_6', text: 'What is an acceleration clause?', category: 'loans_finance' },
+    { id: 'fin_7', text: 'What is a personal guarantee?', category: 'loans_finance' },
+
+    // 8. Lease & Property
+    { id: 'lse_1', text: 'What is a lease agreement?', category: 'property_lease' },
+    { id: 'lse_2', text: 'What is a security deposit clause?', category: 'property_lease' },
+    { id: 'lse_3', text: 'What is a rent escalation clause?', category: 'property_lease' },
+    { id: 'lse_4', text: 'What is a maintenance obligation?', category: 'property_lease' },
+    { id: 'lse_5', text: 'What is a lease lock-in period?', category: 'property_lease' },
+    { id: 'lse_6', text: 'What is tenant notice period?', category: 'property_lease' },
+
+    // 9. Intellectual Property
+    { id: 'ip_1', text: 'What is intellectual property?', category: 'intellectual_property' },
+    { id: 'ip_2', text: 'What is copyright protection?', category: 'intellectual_property' },
+    { id: 'ip_3', text: 'What is a trademark?', category: 'intellectual_property' },
+    { id: 'ip_4', text: 'What is an IP assignment clause?', category: 'intellectual_property' },
+    { id: 'ip_5', text: 'Who owns IP created by employees?', category: 'intellectual_property' },
+    { id: 'ip_6', text: 'What is a trade secret?', category: 'intellectual_property' },
+    { id: 'ip_7', text: 'What is a licensing agreement?', category: 'intellectual_property' },
+
+    // 10. Dispute Resolution
+    { id: 'dsp_1', text: 'What is arbitration?', category: 'disputes_arbitration' },
+    { id: 'dsp_2', text: 'What is mediation?', category: 'disputes_arbitration' },
+    { id: 'dsp_3', text: 'What is a dispute resolution clause?', category: 'disputes_arbitration' },
+    { id: 'dsp_4', text: 'What is specific performance?', category: 'disputes_arbitration' },
+    { id: 'dsp_5', text: 'What is governing jurisdiction?', category: 'disputes_arbitration' },
+]
+
+function getCategoryBalancedSuggestions(recentHistory: Set<string>): string[] {
+    const categories = Array.from(new Set(LEGAL_QUERY_POOL.map(q => q.category)))
+    const shuffledCategories = [...categories].sort(() => 0.5 - Math.random())
+
+    const selected: string[] = []
+
+    for (const cat of shuffledCategories) {
+        if (selected.length >= 4) break
+
+        const candidates = LEGAL_QUERY_POOL.filter(q => q.category === cat && !recentHistory.has(q.id))
+        const poolToUse = candidates.length > 0 ? candidates : LEGAL_QUERY_POOL.filter(q => q.category === cat)
+
+        if (poolToUse.length > 0) {
+            const randomChoice = poolToUse[Math.floor(Math.random() * poolToUse.length)]
+            selected.push(randomChoice.text)
+            recentHistory.add(randomChoice.id)
+        }
+    }
+
+    if (recentHistory.size > 20) {
+        const historyArray = Array.from(recentHistory)
+        historyArray.slice(0, historyArray.length - 15).forEach(id => recentHistory.delete(id))
+    }
+
+    return selected.length === 4 ? selected : [
+        'What is indemnity?',
+        'What is force majeure?',
+        'What should I check before signing a contract?',
+        'What is a non-disclosure agreement?'
+    ]
+}
+
 const Chatbot: React.FC = () => {
     const navigate = useNavigate()
     const [isOpen, setIsOpen] = useState(false)
@@ -211,13 +344,20 @@ const Chatbot: React.FC = () => {
     const [messages, setMessages] = useState<Message[]>([
         {
             id: '1',
-            text: 'Hi! I\'m Alice. Ask me about contracts, NDAs, loans, or employment agreements.',
+            text: 'Hi! I\'m Alice. Ask me about legal concepts, contract clauses, statutory terms, or employment guidelines.',
             sender: 'bot',
             timestamp: new Date()
         }
     ])
     const [inputValue, setInputValue] = useState('')
     const [isLoading, setIsLoading] = useState(false)
+    const recentHistoryRef = useRef<Set<string>>(new Set())
+    const [suggestions, setSuggestions] = useState<string[]>([
+        'What is indemnity?',
+        'What is force majeure?',
+        'What should I check before signing a contract?',
+        'What is a non-disclosure agreement?'
+    ])
     const messagesEndRef = useRef<HTMLDivElement>(null)
     const inputRef = useRef<HTMLInputElement>(null)
 
@@ -227,6 +367,14 @@ const Chatbot: React.FC = () => {
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
     }
+
+    // Refresh randomized category-balanced suggestions whenever chatbot is opened
+    useEffect(() => {
+        if (isOpen) {
+            const nextBatch = getCategoryBalancedSuggestions(recentHistoryRef.current)
+            setSuggestions(nextBatch)
+        }
+    }, [isOpen])
 
     useEffect(() => {
         scrollToBottom()
@@ -686,7 +834,7 @@ How may I assist you with your legal documents today?`
 
                                 {/* Quick Suggestions */}
                                 <HStack spacing={2} px={4} py={2} overflowX="auto" css={{ '&::-webkit-scrollbar': { display: 'none' } }}>
-                                    {['Draft NDA', 'Explain Indemnity', 'Loan Checklist', 'Employment Terms'].map((suggestion) => (
+                                    {suggestions.map((suggestion) => (
                                         <Box
                                             key={suggestion}
                                             as="button"

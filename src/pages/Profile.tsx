@@ -83,6 +83,9 @@ const Profile: React.FC = () => {
         company: '',
         position: '',
         location: '',
+        country: '',
+        state: '',
+        address: '',
         bio: '',
         avatar: ''
     })
@@ -138,6 +141,9 @@ const Profile: React.FC = () => {
                 company: user.user_metadata?.company || prev.company || '',
                 position: user.user_metadata?.position || prev.position || '',
                 location: user.user_metadata?.location || prev.location || '',
+                country: user.user_metadata?.country || prev.country || '',
+                state: user.user_metadata?.state || prev.state || '',
+                address: user.user_metadata?.address || prev.address || '',
                 bio: user.user_metadata?.bio || prev.bio || ''
             }))
 
@@ -181,6 +187,9 @@ const Profile: React.FC = () => {
                 company: profile.company,
                 position: profile.position,
                 location: profile.location,
+                country: profile.country,
+                state: profile.state,
+                address: profile.address,
                 bio: profile.bio
             }
 

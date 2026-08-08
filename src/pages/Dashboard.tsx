@@ -277,6 +277,7 @@ const Dashboard: React.FC = () => {
             <SimpleGrid columns={{ base: 1, md: 3 }} spacing={6} w="full">
               {[
                 {
+                  id: 'nda',
                   title: 'Non-Disclosure Agreement (NDA)',
                   desc: 'Protect proprietary tech, IP, and confidential trade secrets.',
                   tag: 'Popular',
@@ -284,6 +285,7 @@ const Dashboard: React.FC = () => {
                   color: '#970fff',
                 },
                 {
+                  id: 'contract',
                   title: 'Master Services Agreement (MSA)',
                   desc: 'Standard business-to-business contract terms & SLA clauses.',
                   tag: 'Business',
@@ -291,6 +293,7 @@ const Dashboard: React.FC = () => {
                   color: '#00f2fe',
                 },
                 {
+                  id: 'loan',
                   title: 'Loan & Promissory Note',
                   desc: 'Legally enforceable loan repayment schedules and security terms.',
                   tag: 'Finance',
@@ -306,7 +309,7 @@ const Dashboard: React.FC = () => {
                   backdropFilter="blur(25px)"
                   border="1px solid rgba(255, 255, 255, 0.1)"
                   cursor="pointer"
-                  onClick={() => navigate('/generate')}
+                  onClick={() => navigate(`/generate?template=${tmpl.id}`, { state: { template: tmpl.id } })}
                   whileHover={{
                     y: -6,
                     borderColor: tmpl.color,
