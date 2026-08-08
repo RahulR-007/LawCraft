@@ -15,6 +15,7 @@ import { FiSend, FiMessageCircle, FiX, FiMinimize2, FiFileText } from 'react-ico
 import { motion, AnimatePresence } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import { secureChatbot } from '../lib/secureClient'
+import { useAuth } from '../contexts/AuthContext'
 
 const MotionBox = motion(Box)
 
@@ -339,6 +340,7 @@ export function getCategoryBalancedSuggestions(recentHistory: Set<string>): stri
 
 const Chatbot: React.FC = () => {
     const navigate = useNavigate()
+    const { user } = useAuth()
     const [isOpen, setIsOpen] = useState(false)
     const [isMinimized, setIsMinimized] = useState(false)
     const [messages, setMessages] = useState<Message[]>([
@@ -439,6 +441,12 @@ const Chatbot: React.FC = () => {
             }
             setMessages(prev => [...prev, userMessage])
 
+            // If user is an unauthenticated guest visitor, deliver instant knowledge response
+            if (!user) {
+                fallbackResponse(message)
+                return
+            }
+
             // Collect recent messages for conversation history context (truncate to last 6 to keep payload small)
             const history = messages.slice(-6).map(m => ({
                 role: m.sender === 'bot' ? 'assistant' : 'user',
@@ -461,8 +469,10 @@ const Chatbot: React.FC = () => {
                 } else {
                     fallbackResponse(message)
                 }
-            } catch (aiError) {
-                console.error('AI chat completion error:', aiError)
+            } catch (aiError: any) {
+                if (aiError?.code !== 'UNAUTHENTICATED' && aiError?.status !== 401 && !aiError?.message?.includes('signed in')) {
+                    console.error('AI chat completion error:', aiError)
+                }
                 fallbackResponse(message)
             }
         } catch (error) {
