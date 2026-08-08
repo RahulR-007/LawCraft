@@ -106,34 +106,38 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return prof
   }
 
+  const lastFetchedUserIdRef = React.useRef<string | null>(null)
+
+  const handleSessionChange = async (session: Session | null, isInitial = false) => {
+    const currentUser = (session?.user as User) || null
+    if (currentUser) {
+      if (!isInitial && lastFetchedUserIdRef.current === currentUser.id) {
+        setLoading(false)
+        return
+      }
+      lastFetchedUserIdRef.current = currentUser.id
+      const prof = await fetchProfile(currentUser.id)
+      setProfile(prof)
+      setUser(syncUserWithProfile(currentUser, prof))
+    } else {
+      lastFetchedUserIdRef.current = null
+      setUser(null)
+      setProfile(null)
+    }
+    setLoading(false)
+  }
+
   useEffect(() => {
     // Get initial session
     supabase.auth.getSession().then(async ({ data: { session } }: { data: { session: Session | null } }) => {
-      const initialUser = session?.user as User || null
-      if (initialUser) {
-        const prof = await fetchProfile(initialUser.id)
-        setProfile(prof)
-        setUser(syncUserWithProfile(initialUser, prof))
-      } else {
-        setUser(null)
-        setProfile(null)
-      }
-      setLoading(false)
+      await handleSessionChange(session, true)
     })
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event: AuthChangeEvent, session: Session | null) => {
-        const currentUser = session?.user as User || null
-        if (currentUser) {
-          const prof = await fetchProfile(currentUser.id)
-          setProfile(prof)
-          setUser(syncUserWithProfile(currentUser, prof))
-        } else {
-          setUser(null)
-          setProfile(null)
-        }
-        setLoading(false)
+      async (event: AuthChangeEvent, session: Session | null) => {
+        if (event === 'INITIAL_SESSION') return // Avoid race condition with getSession
+        await handleSessionChange(session, false)
       }
     )
 

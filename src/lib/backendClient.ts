@@ -17,17 +17,6 @@ import {
     type DocumentGenerationResult,
 } from './secureClient'
 import { AI_CONFIG, type ChatMessage } from './aiClient'
-import {
-    Document as DocxDocument,
-    Packer,
-    Paragraph,
-    TextRun,
-    AlignmentType,
-    BorderStyle,
-    PageBorderDisplay,
-    PageBorderOffsetFrom,
-    HeadingLevel,
-} from 'docx'
 
 // ── Health ──────────────────────────────────────────────────────────
 export async function backendHealth(): Promise<{ ok: boolean; model?: string }> {
@@ -87,11 +76,12 @@ export { fetchUserDocuments, fetchLegalClauses, fetchLawUpdates }
  * Parses inline Markdown formatting (**bold**, *italic*, ***bold-italic***)
  * into structured docx TextRun instances.
  */
-function parseInlineMarkdown(text: string, fontSize = 24, defaultBold = false): TextRun[] {
+function parseInlineMarkdown(docx: typeof import('docx'), text: string, fontSize = 24, defaultBold = false): any[] {
+    const { TextRun } = docx
     const cleanedText = text.replace(/═{3,}/g, '').trim()
     if (!cleanedText) return []
 
-    const runs: TextRun[] = []
+    const runs: any[] = []
     const regex = /(\*\*\*[\s\S]+?\*\*\*|\*\*[\s\S]+?\*\*|\*[\s\S]+?\*)/g
     let lastIndex = 0
     let match: RegExpExecArray | null
@@ -175,8 +165,9 @@ function parseInlineMarkdown(text: string, fontSize = 24, defaultBold = false): 
  * Converts Markdown content into native docx Paragraph elements with proper
  * headings, bold/italic formatting, indentation, and page layout.
  */
-function convertMarkdownToDocxParagraphs(content: string): Paragraph[] {
-    const paragraphs: Paragraph[] = []
+function convertMarkdownToDocxParagraphs(docx: typeof import('docx'), content: string): any[] {
+    const { Paragraph, TextRun, AlignmentType, HeadingLevel } = docx
+    const paragraphs: any[] = []
     const lines = content.split('\n')
 
     for (let i = 0; i < lines.length; i++) {
@@ -252,7 +243,7 @@ function convertMarkdownToDocxParagraphs(content: string): Paragraph[] {
 
         // 4. Disclaimer Callout Box / Warning Line
         if (line.includes('⚠️') || line.toUpperCase().includes('DISCLAIMER') || line.toUpperCase().includes('LEGAL NOTICE')) {
-            const runs = parseInlineMarkdown(line, 20, false)
+            const runs = parseInlineMarkdown(docx, line, 20, false)
             paragraphs.push(
                 new Paragraph({
                     alignment: AlignmentType.CENTER,
@@ -266,7 +257,7 @@ function convertMarkdownToDocxParagraphs(content: string): Paragraph[] {
         // 5. Bullet List (- or * or •)
         if (/^[-*•]\s+/.test(line)) {
             const listText = line.replace(/^[-*•]\s+/, '')
-            const runs = parseInlineMarkdown(listText, 24)
+            const runs = parseInlineMarkdown(docx, listText, 24)
             paragraphs.push(
                 new Paragraph({
                     alignment: AlignmentType.LEFT,
@@ -286,7 +277,7 @@ function convertMarkdownToDocxParagraphs(content: string): Paragraph[] {
         if (numMatch) {
             const numPrefix = numMatch[1]
             const listText = numMatch[2]
-            const runs = parseInlineMarkdown(listText, 24)
+            const runs = parseInlineMarkdown(docx, listText, 24)
             paragraphs.push(
                 new Paragraph({
                     alignment: AlignmentType.LEFT,
@@ -302,7 +293,7 @@ function convertMarkdownToDocxParagraphs(content: string): Paragraph[] {
         }
 
         // 7. Regular Body Paragraph
-        const runs = parseInlineMarkdown(line, 24)
+        const runs = parseInlineMarkdown(docx, line, 24)
         paragraphs.push(
             new Paragraph({
                 alignment: AlignmentType.JUSTIFIED,
@@ -316,9 +307,11 @@ function convertMarkdownToDocxParagraphs(content: string): Paragraph[] {
 }
 
 export async function backendExportDocx(_title: string, content: string): Promise<Blob> {
-    const formattedParagraphs = convertMarkdownToDocxParagraphs(content)
+    const docx = await import('docx')
+    const { Document, Packer, BorderStyle, PageBorderDisplay, PageBorderOffsetFrom } = docx
+    const formattedParagraphs = convertMarkdownToDocxParagraphs(docx, content)
 
-    const doc = new DocxDocument({
+    const doc = new Document({
         sections: [
             {
                 properties: {

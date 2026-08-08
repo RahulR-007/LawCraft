@@ -14,7 +14,7 @@ import {
 import { FiSend, FiMessageCircle, FiX, FiMinimize2, FiFileText } from 'react-icons/fi'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
-import { secureChatbot, secureHealthCheck } from '../lib/secureClient'
+import { secureChatbot } from '../lib/secureClient'
 
 const MotionBox = motion(Box)
 
@@ -26,7 +26,7 @@ interface Message {
 }
 
 // Chatbot Rules
-const CHATBOT_RULES = {
+export const CHATBOT_RULES = {
     MAX_TOKENS: 512, // Max tokens for generation
     RESPONSE_TIMEOUT: 30000, // 30 seconds timeout
     ALLOWED_TOPICS: [
@@ -55,7 +55,7 @@ const CHATBOT_RULES = {
 }
 
 // Intelligent Legal Answer Enhancer (prevents truncated responses and enriches statutory section Q&A)
-function enhanceLegalAnswer(userQuery: string, rawAnswer: string): string {
+export function enhanceLegalAnswer(userQuery: string, rawAnswer: string): string {
     const queryLower = userQuery.toLowerCase()
 
     if (queryLower.includes('section 13') || queryLower.includes('sec 13')) {
@@ -211,7 +211,7 @@ interface SuggestionQuery {
     category: string
 }
 
-const LEGAL_QUERY_POOL: SuggestionQuery[] = [
+export const LEGAL_QUERY_POOL: SuggestionQuery[] = [
     // 1. Definitions
     { id: 'def_1', text: 'What is indemnity?', category: 'definitions' },
     { id: 'def_2', text: 'What is force majeure?', category: 'definitions' },
@@ -305,7 +305,7 @@ const LEGAL_QUERY_POOL: SuggestionQuery[] = [
     { id: 'dsp_5', text: 'What is governing jurisdiction?', category: 'disputes_arbitration' },
 ]
 
-function getCategoryBalancedSuggestions(recentHistory: Set<string>): string[] {
+export function getCategoryBalancedSuggestions(recentHistory: Set<string>): string[] {
     const categories = Array.from(new Set(LEGAL_QUERY_POOL.map(q => q.category)))
     const shuffledCategories = [...categories].sort(() => 0.5 - Math.random())
 
@@ -439,32 +439,14 @@ const Chatbot: React.FC = () => {
             }
             setMessages(prev => [...prev, userMessage])
 
-            // Check if AI API is available
-            const serverHealthy = await secureHealthCheck()
-
-            if (!serverHealthy) {
-                const warningMessage: Message = {
-                    id: (Date.now() + 1).toString(),
-                    text: "AI API unavailable. Using offline response.",
-                    sender: 'bot',
-                    timestamp: new Date()
-                }
-                setMessages(prev => [...prev, warningMessage])
-
-                setTimeout(() => {
-                    fallbackResponse(message)
-                }, 500)
-                return
-            }
+            // Collect recent messages for conversation history context (truncate to last 6 to keep payload small)
+            const history = messages.slice(-6).map(m => ({
+                role: m.sender === 'bot' ? 'assistant' : 'user',
+                content: m.text
+            }))
 
             try {
-                // Collect recent messages for conversation history context
-                const history = messages.map(m => ({
-                    role: m.sender === 'bot' ? 'assistant' : 'user',
-                    content: m.text
-                }))
-
-                const chatResult = await secureChatbot(message, history)
+                const chatResult = await secureChatbot(message, history, { timeoutMs: 20_000, maxRetries: 1 })
                 const rawAnswer = chatResult.content
 
                 if (rawAnswer && rawAnswer.trim()) {
@@ -484,7 +466,8 @@ const Chatbot: React.FC = () => {
                 fallbackResponse(message)
             }
         } catch (error) {
-            console.error('Error:', error)
+            console.error('Outer error:', error)
+            fallbackResponse(message)
         } finally {
             setIsLoading(false)
         }

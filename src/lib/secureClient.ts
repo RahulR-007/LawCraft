@@ -165,11 +165,14 @@ export async function secureChat(
  */
 export async function secureChatbot(
     message: string,
-    conversationHistory: Array<{ role: string; content: string }> = []
+    conversationHistory: Array<{ role: string; content: string }> = [],
+    options: SecureClientOptions = {}
 ): Promise<{ content: string; blocked?: boolean }> {
+    const { maxRetries = 1, timeoutMs = 20_000 } = options
     return invokeWithRetry<{ content: string; blocked?: boolean }>(
         'ai-chat',
-        { message, conversationHistory }
+        { message, conversationHistory },
+        { maxRetries, timeoutMs }
     )
 }
 
@@ -230,8 +233,8 @@ let cachedHealthCheck: { isHealthy: boolean; timestamp: number } | null = null
 const HEALTH_CHECK_CACHE_MS = 120_000
 
 /**
- * Health check — does NOT consume AI tokens unnecessarily when cached.
- * Tests if the Supabase Edge Functions are reachable.
+ * Health check — tests if Supabase auth & server connection are reachable.
+ * Does NOT consume AI tokens unnecessarily.
  */
 export async function secureHealthCheck(forceRefresh = false): Promise<boolean> {
     const now = Date.now()
@@ -240,23 +243,8 @@ export async function secureHealthCheck(forceRefresh = false): Promise<boolean> 
     }
 
     try {
-        const { data: { session } } = await supabase.auth.getSession()
-        if (!session?.access_token) {
-            // Unauthenticated user - server is reachable
-            cachedHealthCheck = { isHealthy: true, timestamp: now }
-            return true
-        }
-
-        const { error } = await supabase.functions.invoke('ai-proxy', {
-            body: {
-                messages: [{ role: 'user', content: 'ping' }],
-                options: { maxTokens: 1 },
-            },
-            headers: {
-                Authorization: `Bearer ${session.access_token}`,
-            },
-        })
-        const isHealthy = !error || (error as any)?.status === 401 || (error as any)?.status === 400
+        const { error } = await supabase.auth.getSession()
+        const isHealthy = !error
         cachedHealthCheck = { isHealthy, timestamp: now }
         return isHealthy
     } catch {

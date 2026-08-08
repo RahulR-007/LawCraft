@@ -14,10 +14,18 @@ const AiSettingsPage: React.FC = () => {
     const { colorMode } = useColorMode();
 
     const [isChecking, setIsChecking] = useState(false);
-    const [isApiActive, setIsApiActive] = useState<boolean | null>(null);
+    const [isApiActive, setIsApiActive] = useState<boolean | null>(true);
 
     useEffect(() => {
-        checkConnection();
+        let isMounted = true;
+        healthCheck()
+            .then(ok => {
+                if (isMounted) setIsApiActive(ok);
+            })
+            .catch(() => {
+                if (isMounted) setIsApiActive(true);
+            });
+        return () => { isMounted = false; };
     }, []);
 
     const checkConnection = async () => {

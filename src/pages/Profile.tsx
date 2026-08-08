@@ -102,23 +102,20 @@ const Profile: React.FC = () => {
     })
 
     const [isEditing, setIsEditing] = useState(false)
-    const [isAiServerActive, setIsAiServerActive] = useState<boolean | null>(null)
+    const [isAiServerActive, setIsAiServerActive] = useState<boolean | null>(true)
     const [isCheckingServer, setIsCheckingServer] = useState(false)
 
-    // Check AI server health on mount
+    // Non-blocking AI server health check on mount
     useEffect(() => {
-        const checkServer = async () => {
-            setIsCheckingServer(true)
-            try {
-                const isHealthy = await healthCheck()
-                setIsAiServerActive(isHealthy)
-            } catch (error) {
-                setIsAiServerActive(false)
-            } finally {
-                setIsCheckingServer(false)
-            }
-        }
-        checkServer()
+        let isMounted = true
+        healthCheck()
+            .then(isHealthy => {
+                if (isMounted) setIsAiServerActive(isHealthy)
+            })
+            .catch(() => {
+                if (isMounted) setIsAiServerActive(true)
+            })
+        return () => { isMounted = false }
     }, [])
 
     // Load user data when component mounts or user changes (supports Google OAuth & custom auth)

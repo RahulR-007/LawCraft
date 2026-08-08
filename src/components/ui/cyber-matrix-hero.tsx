@@ -74,24 +74,30 @@ const CyberMatrixHero: React.FC<CyberMatrixHeroProps> = ({
             }
         }
 
+        let rafId: number | null = null;
         const handleMouseMove = (e: MouseEvent) => {
+            if (rafId) return;
             const mouseX = e.clientX;
             const mouseY = e.clientY;
-            const radius = window.innerWidth / 4;
+            rafId = requestAnimationFrame(() => {
+                rafId = null;
+                if (!grid) return;
+                const radius = window.innerWidth / 4;
+                const children = Array.from(grid.children) as HTMLDivElement[];
+                for (let i = 0; i < children.length; i++) {
+                    const tile = children[i];
+                    const rect = tile.getBoundingClientRect();
+                    const tileX = rect.left + rect.width / 2;
+                    const tileY = rect.top + rect.height / 2;
 
-            for(const tile of Array.from(grid.children) as HTMLDivElement[]) {
-                const rect = tile.getBoundingClientRect();
-                const tileX = rect.left + rect.width / 2;
-                const tileY = rect.top + rect.height / 2;
+                    const distance = Math.sqrt(
+                        Math.pow(mouseX - tileX, 2) + Math.pow(mouseY - tileY, 2)
+                    );
 
-                const distance = Math.sqrt(
-                    Math.pow(mouseX - tileX, 2) + Math.pow(mouseY - tileY, 2)
-                );
-
-                const intensity = Math.max(0, 1 - distance / radius);
-                
-                tile.style.setProperty('--intensity', intensity.toString());
-            }
+                    const intensity = Math.max(0, 1 - distance / radius);
+                    tile.style.setProperty('--intensity', intensity.toString());
+                }
+            });
         };
 
         window.addEventListener('resize', createGrid);
@@ -100,6 +106,7 @@ const CyberMatrixHero: React.FC<CyberMatrixHeroProps> = ({
         createGrid();
 
         return () => {
+            if (rafId) cancelAnimationFrame(rafId);
             window.removeEventListener('resize', createGrid);
             window.removeEventListener('mousemove', handleMouseMove);
         };
