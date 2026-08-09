@@ -417,7 +417,8 @@ const Pricing: React.FC = () => {
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ duration: 0.8, delay: index * 0.2 }}
                                     flex="1"
-                                    maxW="400px"
+                                    w="full"
+                                    maxW={{ base: '100%', lg: '400px' }}
                                     position="relative"
                                 >
                                     {plan.isPopular && (

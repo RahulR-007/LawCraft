@@ -95,7 +95,7 @@ body {
   }
 }
 
-/* Responsive images and media */
+/* Responsive media elements */
 img,
 video,
 canvas,
@@ -106,44 +106,6 @@ object {
   display: block;
   max-width: 100%;
   height: auto;
-}
-
-/* Responsive tables */
-@media (max-width: 768px) {
-
-  table,
-  thead,
-  tbody,
-  th,
-  td,
-  tr {
-    display: block;
-  }
-
-  thead tr {
-    position: absolute;
-    top: -9999px;
-    left: -9999px;
-  }
-
-  tr {
-    border: 1px solid #ccc;
-    margin-bottom: 10px;
-  }
-
-  td {
-    border: none;
-    position: relative;
-    padding-left: 50%;
-  }
-
-  td:before {
-    content: attr(data-label) ": ";
-    position: absolute;
-    left: 6px;
-    width: 45%;
-    white-space: nowrap;
-  }
 }
 
 /* Custom scrollbar */

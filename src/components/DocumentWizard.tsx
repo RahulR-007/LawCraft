@@ -650,7 +650,7 @@ export const DocumentWizard: React.FC<DocumentWizardProps> = ({ onDocumentGenera
                             backdropFilter="blur(20px)"
                             border={`1px solid ${colorMode === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'}`}
                             borderRadius="2xl"
-                            p={8}
+                            p={{ base: 4, md: 8 }}
                         >
                             <VStack spacing={6} align="start">
                                 <VStack align="start" spacing={1}>
@@ -761,7 +761,7 @@ export const DocumentWizard: React.FC<DocumentWizardProps> = ({ onDocumentGenera
                             backdropFilter="blur(20px)"
                             border={`1px solid ${colorMode === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'}`}
                             borderRadius="2xl"
-                            p={8}
+                            p={{ base: 4, md: 8 }}
                         >
                             <VStack spacing={6} align="start">
                                 <VStack align="start" spacing={1}>
@@ -910,7 +910,7 @@ export const DocumentWizard: React.FC<DocumentWizardProps> = ({ onDocumentGenera
                             backdropFilter="blur(20px)"
                             border={`1px solid ${colorMode === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'}`}
                             borderRadius="2xl"
-                            p={8}
+                            p={{ base: 4, md: 8 }}
                         >
                             <VStack spacing={6} align="start">
                                 <VStack align="start" spacing={1}>
@@ -997,7 +997,7 @@ export const DocumentWizard: React.FC<DocumentWizardProps> = ({ onDocumentGenera
                             backdropFilter="blur(20px)"
                             border={`1px solid ${colorMode === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'}`}
                             borderRadius="2xl"
-                            p={8}
+                            p={{ base: 4, md: 8 }}
                         >
                             <VStack spacing={6} align="start">
                                 <VStack align="start" spacing={1}>

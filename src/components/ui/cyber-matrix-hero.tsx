@@ -151,8 +151,8 @@ const CyberMatrixHero: React.FC<CyberMatrixHeroProps> = ({
                     display: grid;
                     grid-template-columns: repeat(var(--columns), 1fr);
                     grid-template-rows: repeat(var(--rows), 1fr);
-                    width: 100vw;
-                    height: 100vh;
+                    width: 100%;
+                    height: 100%;
                     position: absolute;
                     top: 0;
                     left: 0;

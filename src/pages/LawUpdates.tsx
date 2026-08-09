@@ -151,8 +151,9 @@ const LawUpdates: React.FC = () => {
                 position="absolute"
                 top="5%"
                 right="10%"
-                w="400px"
-                h="400px"
+                w={{ base: '250px', md: '400px' }}
+                h={{ base: '250px', md: '400px' }}
+                maxW="100%"
                 borderRadius="50%"
                 bg="rgba(0, 212, 255, 0.08)"
                 filter="blur(100px)"
@@ -162,8 +163,9 @@ const LawUpdates: React.FC = () => {
                 position="absolute"
                 bottom="10%"
                 left="5%"
-                w="350px"
-                h="350px"
+                w={{ base: '200px', md: '350px' }}
+                h={{ base: '200px', md: '350px' }}
+                maxW="100%"
                 borderRadius="50%"
                 bg="rgba(151, 15, 255, 0.08)"
                 filter="blur(100px)"

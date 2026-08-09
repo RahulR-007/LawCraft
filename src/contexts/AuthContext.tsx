@@ -128,9 +128,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }
 
   useEffect(() => {
+    // Safety fallback timeout: ensure loading transitions to false within 3000ms max
+    const timer = setTimeout(() => {
+      setLoading(false)
+    }, 3000)
+
     // Get initial session
     supabase.auth.getSession().then(async ({ data: { session } }: { data: { session: Session | null } }) => {
       await handleSessionChange(session, true)
+      clearTimeout(timer)
+    }).catch(() => {
+      setLoading(false)
+      clearTimeout(timer)
     })
 
     // Listen for auth changes
@@ -141,7 +150,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
     )
 
-    return () => subscription.unsubscribe()
+    return () => {
+      clearTimeout(timer)
+      subscription.unsubscribe()
+    }
   }, [])
 
   const signIn = async (email: string, password: string) => {
